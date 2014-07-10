@@ -41,7 +41,15 @@ Examples:
 Scenario: Multiple hardware disconnects within a certain time should create a ticket
   Given pending
   Then I should generate a ticket
+Examples:
+  | Disconnect Count | Gen Ticket |
+  | 1                | no         |
+  | 3                | yes        |
 
 Scenario: Brass almost out should create ticket
   Given pending
   Then I should generate a ticket
+Examples:
+  | Brass Count | Gen Ticket |
+  | 100         | no         |
+  | 9           | yes        |
