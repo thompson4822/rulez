@@ -3,7 +3,7 @@ package stepDefinitions
 import java.sql.Timestamp
 import java.util.Calendar
 
-import com.minutekey.{DefaultScreenMonitorService, ScreenMonitorService, TicketGenerator, HardwareMonitorService}
+import com.minutekey.{DefaultScreenMonitorService, KeyMonitorService, DefaultKeyMonitorService, DefaultHardwareMonitorService, ScreenMonitorService, TicketGenerator, HardwareMonitorService}
 import com.minutekey.model.ScreenRecord
 import cucumber.api.{DataTable, PendingException}
 import cucumber.api.scala.{EN, ScalaDsl}
@@ -24,6 +24,8 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
   var sut: ScreenMonitorService = _
 
   var hms: HardwareMonitorService = _
+
+  var kms: KeyMonitorService = _
 
   var kioskType: String = _
 
@@ -123,20 +125,43 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
 
   var device: String = _
 
-  Given("""^we have USB attached hardware devices Bill Collector$"""){ (dev: String) =>
+  Given("""^we have USB attached hardware devices (Bill Collector | Card Reader)$"""){ (dev: String) =>
     device = dev
+    hms = new DefaultHardwareMonitorService(mockTicketGenerator)
   }
 
-  var disconnectCount: Int = _
+  var disconnectCnt: Int = _
 
   Given("""^the disconnect count is (\d+)$"""){ (cnt:Int) =>
-    disconnectCount = cnt
+    disconnectCnt = cnt
   }
 
   Then("""^whether to generate a ticket is (yes|no) $"""){ (ticketSent: String) =>
     val timesCalled = if (ticketSent == "yes") 1 else 0
+    hms.disconnectCount(disconnectCnt)
     hms.checkHardwareStatus
     verify(mockTicketGenerator, times(timesCalled)).create(device)
   }
 
+  //
+  //Brass Key test
+  //
+
+  Given("""^a kiosk has brass keys$"""){ () =>
+  //// Express the Regexp above with the code you wish you had
+//    throw new PendingException()
+  }
+
+  var brassKeyCnt: Int = _
+
+  Given("""^the number of keys remaining is (\d+)$"""){ (cnt:Int) =>
+    brassKeyCnt = cnt
+  }
+
+  Then("""^whether to generate a brass low ticket is (yes | no)$"""){ (ticketSent: String) =>
+    val timesCalled = if (ticketSent == "yes") 1 else 0
+    kms.brassKeyCount(brassKeyCnt)
+    kms.checkKeyStatus
+    verify(mockTicketGenerator, times(timesCalled)).create("Brass keys low")
+  }
 }
