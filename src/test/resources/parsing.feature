@@ -15,8 +15,7 @@ Background: Preconditions
 
 Scenario Outline: I should be able to detect that a screen was visited, as well as how often
   When I parse the log file
-  Then I should find "<Screen>" screen entries
-  And I should see the screen "<Screen>" was visited <Times Visited> times
+  Then I should see the screen "<Screen>" was visited <Times Visited> times
 Examples: Sad path
   | Screen       | Times Visited |
   | Attract Loop | 0             |

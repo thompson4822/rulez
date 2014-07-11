@@ -39,10 +39,6 @@ class ParsingStepDefinitions extends ScalaDsl with EN with ShouldMatchers {
     log = sut.read
   }
 
-  Then("""^I should find "([^"]*)" screen entries$"""){ (screenName: String) =>
-    log.collect{case record: ScreenRecord => record}.exists(_.name == screenName) should be (true)
-  }
-
   Then("""^I should see the screen "([^"]*)" was visited (\d+) times$"""){ (screenName: String, timesVisited: Int) =>
     log.collect { case record: ScreenRecord => record}.count(_.name == screenName) should be (timesVisited)
   }
