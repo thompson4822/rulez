@@ -3,7 +3,9 @@ package com.minutekey.model
 import java.sql.Timestamp
 import java.util.Calendar
 
-case class ScreenRecord(name: String, timeOfEntry: Timestamp, timeoutSeconds: Int) {
+sealed trait LogRecord
+
+case class ScreenRecord(name: String, timeOfEntry: Timestamp, timeoutSeconds: Int) extends LogRecord {
 }
 
 object ScreenRecord {
