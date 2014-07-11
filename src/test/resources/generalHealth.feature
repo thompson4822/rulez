@@ -12,7 +12,6 @@ Scenario: If the customer's last screen was not remove key, create a ticket
   Given pending
 
 
-@current
 Scenario Outline: Screen hasn't transitioned within its timeout period, create a ticket
   Given the current screen is "<Current Screen>"
   When time elapsed is <Time Elapsed> seconds
@@ -38,10 +37,21 @@ Examples:
   | mk+        | 2            | 4             |
   | standard   | 2            | 3             |
 
-Scenario: Multiple hardware disconnects within a certain time should create a ticket
-  Given pending
-  Then I should generate a ticket
+@current
+Scenario Outline: Multiple hardware disconnects within a certain time should create a ticket
+  Given we have USB attached hardware devices <Device>
+  And the disconnect count is <Disconnect Count>
+  Then whether to generate a ticket is <Gen Ticket>
+Examples:
+  | Device           | Disconnect Count | Gen Ticket |
+  | Bill Collector   | 1                | no         |
+  | Bill Collector   | 3                | yes        |
 
-Scenario: Brass almost out should create ticket
-  Given pending
-  Then I should generate a ticket
+Scenario Outline: Brass almost out should create ticket
+  Given a kiosk has brass keys
+  And the number of keys remaining is <Brass Count>
+  Then whether to generate a brass low ticket is <Gen Ticket>
+Examples:
+  | Brass Count | Gen Ticket |
+  | 100         | no         |
+  | 9           | yes        |

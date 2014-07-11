@@ -3,7 +3,7 @@ package stepDefinitions
 import java.sql.Timestamp
 import java.util.Calendar
 
-import com.minutekey.{DefaultScreenMonitorService, ScreenMonitorService, TicketGenerator}
+import com.minutekey.{DefaultScreenMonitorService, ScreenMonitorService, TicketGenerator, HardwareMonitorService}
 import com.minutekey.model.ScreenRecord
 import cucumber.api.{DataTable, PendingException}
 import cucumber.api.scala.{EN, ScalaDsl}
@@ -23,15 +23,7 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
 
   var sut: ScreenMonitorService = _
 
-/*
-  Given("""^the current screen will timeout after (\d+) minutes$"""){ (minutes:Int) =>
-    timeout = minutes
-  }
-
-  Given("""^we're on key copy progress$"""){ () =>
-    currentScreen = "Key Copy Progress"
-  }
-*/
+  var hms: HardwareMonitorService = _
 
   var kioskType: String = _
 
@@ -128,5 +120,23 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
     throw new PendingException()
   }
 */
+
+  var device: String = _
+
+  Given("""^we have USB attached hardware devices Bill Collector$"""){ (dev: String) =>
+    device = dev
+  }
+
+  var disconnectCount: Int = _
+
+  Given("""^the disconnect count is (\d+)$"""){ (cnt:Int) =>
+    disconnectCount = cnt
+  }
+
+  Then("""^whether to generate a ticket is (yes|no) $"""){ (ticketSent: String) =>
+    val timesCalled = if (ticketSent == "yes") 1 else 0
+    hms.checkHardwareStatus
+    verify(mockTicketGenerator, times(timesCalled)).create(device)
+  }
 
 }
