@@ -37,16 +37,18 @@ Examples:
   | mk+        | 2            | 4             |
   | standard   | 2            | 3             |
 
-@current
+
 Scenario Outline: Multiple hardware disconnects within a certain time should create a ticket
-  Given we have USB attached hardware devices <Device>
+  Given we have USB attached hardware device <Device>
   And the disconnect count is <Disconnect Count>
   Then whether to generate a ticket is <Gen Ticket>
 Examples:
   | Device           | Disconnect Count | Gen Ticket |
   | Bill Collector   | 1                | no         |
   | Bill Collector   | 3                | yes        |
+  | Card Reader      | 3                | yes        |
 
+@current
 Scenario Outline: Brass almost out should create ticket
   Given a kiosk has brass keys
   And the number of keys remaining is <Brass Count>
