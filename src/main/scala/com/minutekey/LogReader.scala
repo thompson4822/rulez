@@ -11,7 +11,7 @@ trait LogReader {
 
 import util.matching.Regex
 
-class DefaultLogReader extends LogReader {
+class DefaultLogReader(fileSystem: FileSystem) extends LogReader {
   implicit class RegexContext(sc: StringContext) {
     def r = new Regex(sc.parts.mkString, sc.parts.tail.map(_ => "x"): _*)
   }
