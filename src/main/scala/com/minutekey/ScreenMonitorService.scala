@@ -5,13 +5,6 @@ import java.util.{TimerTask, Timer}
 
 import model._
 
-trait TicketGenerator {
-  def create(currentScreen: String): Unit
-}
-
-class DefaultTicketGenerator extends TicketGenerator {
-  override def create(currentScreen: String): Unit = {}
-}
 
 /**
  * Created by steve on 7/10/14.
@@ -27,7 +20,7 @@ class ScreenTimeoutTask(currentScreen: ScreenRecord, ticketGenerator: TicketGene
   }
 }
 
-class DefaultScreenMonitorService(val currentScreen: ScreenRecord, val ticketGenerator: TicketGenerator) extends ScreenMonitorService {
+class DefaultScreenMonitorService(val currentScreen: ScreenRecord, val ticketGenerator: TicketGenerator) extends HardwareMonitorService {
   import DefaultScreenMonitorService._
 
   timer.cancel()
