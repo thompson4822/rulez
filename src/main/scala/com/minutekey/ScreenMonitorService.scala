@@ -20,7 +20,7 @@ class ScreenTimeoutTask(currentScreen: ScreenRecord, ticketGenerator: TicketGene
   }
 }
 
-class DefaultScreenMonitorService(val currentScreen: ScreenRecord, val ticketGenerator: TicketGenerator) extends HardwareMonitorService {
+class DefaultScreenMonitorService(val currentScreen: ScreenRecord, val ticketGenerator: TicketGenerator) extends ScreenMonitorService {
   import DefaultScreenMonitorService._
 
   timer.cancel()

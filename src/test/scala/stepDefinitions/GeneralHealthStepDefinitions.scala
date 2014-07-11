@@ -123,7 +123,7 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
 
   var device: String = _
 
-  Given("""^we have USB attached hardware devices such as bill collectors and credit card readers$"""){ (dev: String) =>
+  Given("""^we have USB attached hardware devices Bill Collector$"""){ (dev: String) =>
     device = dev
   }
 
