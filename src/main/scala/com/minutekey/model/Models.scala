@@ -5,7 +5,7 @@ import java.util.Calendar
 
 sealed trait LogRecord
 
-case class ScreenRecord(name: String, timeOfEntry: Timestamp, timeoutSeconds: Int) extends LogRecord {
+case class ScreenRecord(name: String, timeOfEntry: Timestamp, timeoutSeconds: Int, sessionId: Option[String] = None) extends LogRecord {
 }
 
 object ScreenRecord {
