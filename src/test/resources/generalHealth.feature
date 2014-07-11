@@ -5,12 +5,24 @@ Background: Preconditions
     | Screen            | Timeout |
     | Insert Key        | 3       |
 
-Scenario: If the cancel button is being hit repeatedly for a particular screen, create a ticket
-  Given pending
+@current
+Scenario Outline: If the cancel button is being hit repeatedly for a particular screen, create a ticket
+  Given the current screen is "<Current Screen>"
+  And the number of cancel button clicks is <Cancel Click Count>
+  Then whether to generate a ticket is <Gen Ticket>
+Examples:
+  | Current Screen   | Cancel Click Count | Gen Ticket |
+  | Insert Key       | 1                  | no         |
+  | Cash Payment     | 3                  | yes        |
+  | Card Reader      | 3                  | yes        |
 
-Scenario: If the customer's last screen was not remove key, create a ticket
-  Given pending
-
+Scenario Outline: If the customer's last screen was not remove key, create a ticket
+  Given the customer's last screen is "<Last Screen>"
+  Then whether to generate a ticket is <Gen Ticket>
+Examples:
+  | Last Screen   | Gen Ticket |
+  | Cash Payment  | yes        |
+  | Remove Key    | no         |
 
 Scenario Outline: Screen hasn't transitioned within its timeout period, create a ticket
   Given the current screen is "<Current Screen>"
@@ -22,7 +34,6 @@ Examples: Sad path
 Examples: Happy path
   | Current Screen | Time Elapsed | Expectation |
   | Insert Key     | 1            | should not  |
-
 
 # This would account for size of cart and mk+ or regular machine
 
@@ -48,7 +59,6 @@ Examples:
   | Bill Collector   | 3                | yes        |
   | Card Reader      | 3                | yes        |
 
-@current
 Scenario Outline: Brass almost out should create ticket
   Given a kiosk has brass keys
   And the number of keys remaining is <Brass Count>

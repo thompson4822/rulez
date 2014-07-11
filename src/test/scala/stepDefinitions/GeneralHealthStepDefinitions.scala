@@ -3,7 +3,7 @@ package stepDefinitions
 import java.sql.Timestamp
 import java.util.Calendar
 
-import com.minutekey.{DefaultScreenMonitorService, KeyMonitorService, DefaultKeyMonitorService, DefaultHardwareMonitorService, ScreenMonitorService, TicketGenerator, HardwareMonitorService}
+import com.minutekey.{DefaultScreenMonitorService, ClickMonitorService, KeyMonitorService, DefaultKeyMonitorService, DefaultHardwareMonitorService, ScreenMonitorService, TicketGenerator, HardwareMonitorService}
 import com.minutekey.model.ScreenRecord
 import cucumber.api.{DataTable, PendingException}
 import cucumber.api.scala.{EN, ScalaDsl}
@@ -26,6 +26,8 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
   var hms: HardwareMonitorService = _
 
   var kms: KeyMonitorService = _
+
+  var cms: ClickMonitorService = _
 
   var kioskType: String = _
 
@@ -164,4 +166,23 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
     kms.checkKeyStatus
     verify(mockTicketGenerator, times(timesCalled)).create("Brass keys low")
   }
+
+  //
+  // Cancel clicks test
+  //
+
+  var cancelClicksCnt: Int = _
+
+  Given("""^the number of cancel button clicks is (\d+)$"""){ (cnt:Int) =>
+    cancelClicksCnt = cnt
+  }
+
+  Then("""^whether to generate a ticket is (yes | no)$"""){ (ticketSent: String) =>
+    val timesCalled = if (ticketSent == "yes") 1 else 0
+    cms.cancelClickCount(cancelClicksCnt)
+    cms.checkCancelClicks
+    verify(mockTicketGenerator, times(timesCalled)).create("Cash Payment - excessive cancels")
+  }
+
 }
+
