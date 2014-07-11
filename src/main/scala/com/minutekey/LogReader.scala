@@ -1,6 +1,10 @@
 package com.minutekey
 
+import java.io.File
+import java.util.Date
+
 import com.minutekey.model._
+import sun.reflect.generics.reflectiveObjects.NotImplementedException
 
 /**
  * Created by steve on 7/11/14.
@@ -32,10 +36,25 @@ class DefaultLogReader(fileSystem: FileSystem) extends LogReader {
   def parserWithIdentifier(identifier: String): Regex =
     ("^" + timeParser + " " + identifier + " " + payloadParser + "$").r
 
-  val pageEntryParser = parserWithIdentifier("DEBUG - Page Entry:")
-  val billAcceptorDisconnectedParser = parserWithIdentifier("DEBUG - Page Entry:")
-  val billAcceptorConnectedParser = parserWithIdentifier("DEBUG - BillAcceptorConnectedEvent:")
-  val surveyResponseParser = parserWithIdentifier("DEBUG - SurveyResponse:")
+  val PageEntryParser = parserWithIdentifier("DEBUG - Page Entry:")
+  val BillAcceptorDisconnectedParser = parserWithIdentifier("DEBUG - Page Entry:")
+  val BillAcceptorConnectedParser = parserWithIdentifier("DEBUG - BillAcceptorConnectedEvent:")
+  val SurveyResponseParser = parserWithIdentifier("DEBUG - SurveyResponse:")
+  val UnknownRecordParser = parserWithIdentifier(".*")
 
-  override def read: Seq[LogRecord] = ???
+  def readFile(date: Date, file: File): Seq[LogRecord] = {
+    val lines = fileSystem.read(file)
+    lines map {
+      case PageEntryParser(time, payload) => ScreenRecord(date, time, payload)
+      case BillAcceptorDisconnectedParser(time, payload) => BillAcceptorDisconnectedRecord(date, time, payload)
+      case BillAcceptorConnectedParser(time, payload) => BillAcceptorConnectedRecord(date, time, payload)
+      case SurveyResponseParser(time, payload) => SurveyResponseRecord(date, time, payload)
+      case UnknownRecordParser(time, payload) => UnknownRecord(date, time, payload)
+    }
+  }
+
+  override def read: Seq[LogRecord] = {
+    val files = fileSystem.logFiles
+    files.map(record => readFile(record._1, record._2)).flatten.toSeq
+  }
 }

@@ -19,7 +19,7 @@ class TestFileSystem(fileContent: Seq[String]) extends FileSystem {
 
   override def logFiles: Map[Date, File] = Map(today -> new File("WUT"))
 
-  override def read(filename: String): Seq[String] = fileContent
+  override def read(file: File): Seq[String] = fileContent
 }
 
 class ParsingStepDefinitions extends ScalaDsl with EN with ShouldMatchers {
