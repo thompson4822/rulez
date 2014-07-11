@@ -44,8 +44,8 @@ class ParsingStepDefinitions extends ScalaDsl with EN with ShouldMatchers {
   }
 
   Then("""^any screen entries that are not "([^"]*)" should contain a session id$"""){ (screenName: String) =>
-    val screenRecords = log.collect { case record: ScreenRecord => record }.filter(_.name != "screenName")
-    screenRecords.map(_.sessionId).length should be (screenRecords.length)
+    val screenRecords = log.collect { case record: ScreenRecord => record }.filter(_.name != screenName)
+    screenRecords.flatMap(_.sessionId).length should be (screenRecords.length)
 
   }
 
