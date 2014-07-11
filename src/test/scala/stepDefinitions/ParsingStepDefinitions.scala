@@ -19,7 +19,7 @@ class TestFileSystem(fileContent: Seq[String]) extends FileSystem {
 
   override def logFiles: Map[Date, File] = Map(today -> new File("WUT"))
 
-  override def read(filename: String): Seq[String] = fileContent
+  override def read(file: File): Seq[String] = fileContent
 }
 
 class ParsingStepDefinitions extends ScalaDsl with EN with ShouldMatchers {
@@ -39,17 +39,13 @@ class ParsingStepDefinitions extends ScalaDsl with EN with ShouldMatchers {
     log = sut.read
   }
 
-  Then("""^I should find "([^"]*)" screen entries$"""){ (screenName: String) =>
-    log.collect{case record: ScreenRecord => record}.exists(_.name == screenName) should be (true)
-  }
-
   Then("""^I should see the screen "([^"]*)" was visited (\d+) times$"""){ (screenName: String, timesVisited: Int) =>
     log.collect { case record: ScreenRecord => record}.count(_.name == screenName) should be (timesVisited)
   }
 
   Then("""^any screen entries that are not "([^"]*)" should contain a session id$"""){ (screenName: String) =>
-    val screenRecords = log.collect { case record: ScreenRecord => record }.filter(_.name != "screenName")
-    screenRecords.map(_.sessionId).length should be (screenRecords.length)
+    val screenRecords = log.collect { case record: ScreenRecord => record }.filter(_.name != screenName)
+    screenRecords.flatMap(_.sessionId).length should be (screenRecords.length)
 
   }
 

@@ -9,7 +9,7 @@ import scala.io.Source
  */
 trait FileSystem {
   def logFiles: Map[Date, File]
-  def read(filename: String): Seq[String]
+  def read(file: File): Seq[String]
 }
 
 class DefaultFileSystem {
@@ -17,7 +17,7 @@ class DefaultFileSystem {
     ???
   }
 
-  def read(filename: String): Seq[String] = {
+  def read(file: File): Seq[String] = {
     ???
   }
 }
