@@ -5,16 +5,15 @@ Background: Preconditions
     | Screen            | Timeout |
     | Insert Key        | 3       |
 
-@current
+@clickTest
 Scenario Outline: If the cancel button is being hit repeatedly for a particular screen, create a ticket
-  Given the current screen is "<Current Screen>"
-  And the number of cancel button clicks is <Cancel Click Count>
+  Given the number of cancel button clicks is <Cancel Click Count>
   Then whether to generate a ticket is <Gen Ticket>
 Examples:
-  | Current Screen   | Cancel Click Count | Gen Ticket |
-  | Insert Key       | 1                  | no         |
-  | Cash Payment     | 3                  | yes        |
-  | Card Reader      | 3                  | yes        |
+  | Cancel Click Count | Gen Ticket |
+  | 1                  | no         |
+  | 3                  | yes        |
+  | 5                  | yes        |
 
 Scenario Outline: If the customer's last screen was not remove key, create a ticket
   Given the customer's last screen is "<Last Screen>"
@@ -48,7 +47,7 @@ Examples:
   | mk+        | 2            | 4             |
   | standard   | 2            | 3             |
 
-
+@current
 Scenario Outline: Multiple hardware disconnects within a certain time should create a ticket
   Given we have USB attached hardware device <Device>
   And the disconnect count is <Disconnect Count>
@@ -58,6 +57,7 @@ Examples:
   | Bill Collector   | 1                | no         |
   | Bill Collector   | 3                | yes        |
   | Card Reader      | 3                | yes        |
+
 
 Scenario Outline: Brass almost out should create ticket
   Given a kiosk has brass keys

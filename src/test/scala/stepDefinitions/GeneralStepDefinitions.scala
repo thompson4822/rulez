@@ -10,6 +10,6 @@ import org.scalatest.matchers.ShouldMatchers
  */
 class GeneralStepDefinitions extends ScalaDsl with EN with ShouldMatchers {
   Given("pending") { () =>
-    throw new PendingException()
+    //throw new PendingException()
   }
 }
