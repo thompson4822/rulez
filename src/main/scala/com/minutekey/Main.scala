@@ -1,12 +1,18 @@
 package com.minutekey
 
-import java.nio.file.{FileSystems, Paths}
+import java.io.{RandomAccessFile, File}
+import java.nio.CharBuffer
+import java.nio.channels.FileChannel.MapMode
+import java.nio.charset.Charset
+import java.nio.file.{Files, Path, FileSystems, Paths}
 import java.nio.file.StandardWatchEventKinds._
 import java.sql.Timestamp
-import akka.actor.ActorRef
-import ch.qos.logback.classic.Logger
+import java.util.concurrent.TimeUnit
+import akka.actor.{Props, ActorSystem, Actor, ActorRef}
+import akka.event.{LoggingReceive, Logging}
 import org.slf4j.LoggerFactory
 import collection.JavaConversions._
+import collection.mutable.{Map => MutableMap}
 
 /**
  * Created by steve on 7/9/14.
@@ -28,34 +34,101 @@ object ModelParser {
 
 object Main {
   def logger = LoggerFactory.getLogger("default")
-  def main(args: Array[String]) {
-    val watchService = FileSystems.getDefault.newWatchService()
-    Paths.get("/home/steve/foo/bar").register(watchService, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY)
 
-    while(true) {
-      val key = watchService.take()
-      key.pollEvents() foreach { event =>
-        event.kind() match {
-          case ENTRY_CREATE => logger.info("Dude, a file was just created!")
-          case ENTRY_DELETE => logger.info("Dude, a file was just deleted!")
-          case ENTRY_MODIFY => logger.info("Dude, somebody just changed a file!")
-          case x =>
-            logger.info(s"Unknown event $x")
-          //logger.warn(s"Unknown event $x")
-        }
-      }
-      key.reset()
-    }}
+  def main(args: Array[String]) {
+    val system = ActorSystem()
+    val fsActor = system.actorOf(Props[FileSystemActor], "fileSystem")
+    fsActor ! MonitorDir(Paths get "/home/steve/foo/bar")
+/*
+    TimeUnit.SECONDS.sleep(60)
+    system.shutdown()
+*/
+
+  }
+}
+
+sealed trait FileSystemChange
+
+case class Created(file: File) extends FileSystemChange
+
+case class Modified(file: File) extends FileSystemChange
+
+case class MonitorDir(path: Path)
+
+class FileSystemActor extends Actor {
+  def logger = LoggerFactory.getLogger("default")
+  val log = Logging(context.system, this)
+  val watchServiceTask = new WatchServiceTask(self)
+  val watchThread = new Thread(watchServiceTask, "WatchService")
+
+  // Need a mutable dictionary of file names to file size
+  val knownFiles: MutableMap[File, Long] = MutableMap()
+
+  override def preStart() {
+    watchThread.setDaemon(true)
+    watchThread.start()
   }
 
-class WatchServiceTask2(notifyActor: ActorRef) extends Runnable {
+  override def postStop() {
+    watchThread.interrupt()
+  }
+
+  def newContent(file: File): String = {
+    val randomAccessFile = new RandomAccessFile(file, "r")
+    val startPosition = knownFiles(file)
+    val length = file.length() - startPosition
+    val buff = randomAccessFile.getChannel.map(MapMode.READ_ONLY, startPosition, length)
+    val enc = Charset.forName("ASCII")
+    val chars: CharBuffer = enc.decode(buff)
+    chars.toString
+  }
+
+  def receive = LoggingReceive {
+    case MonitorDir(path) =>
+      watchServiceTask.watch(path)
+      // For each existing file in the directory, we need to call created to have it initially read and parsed
+      logger.info(s"We're now going to monitor ${path.toString}")
+      val directoryStream = Files.newDirectoryStream(path)
+      val files = directoryStream.map(_.toFile)
+      files.map(file => self ! Created(file))
+    case Created(file) =>
+      logger.info(s"The file '${file.toString}' was just created")
+      knownFiles(file) = file.length()
+      // Parse into individual case classes
+    case Modified(file) =>
+      // Get what changed in the file
+      val addedContent = newContent(file)
+      // Update the length of the file
+      knownFiles(file) = file.length()
+      logger.info(s"The file '${file.toString}' just had the following content added: \n$addedContent")
+
+  }
+}
+
+class WatchServiceTask(notifyActor: ActorRef) extends Runnable {
   private val watchService = FileSystems.getDefault.newWatchService()
   def logger = LoggerFactory.getLogger("default")
 
+  def watch(path: Path) =
+    path.register(watchService, ENTRY_CREATE, ENTRY_MODIFY)
+
   def run() {
     try {
+      logger.debug("Waiting for log file changes...")
       while (!Thread.currentThread().isInterrupted) {
         val key = watchService.take()
+        key.pollEvents() foreach {
+          event =>
+            val relativePath = event.context().asInstanceOf[Path]
+            val path = key.watchable().asInstanceOf[Path].resolve(relativePath)
+            event.kind() match {
+              case ENTRY_CREATE =>
+                notifyActor ! Created(path.toFile)
+              case ENTRY_MODIFY =>
+                notifyActor ! Modified(path.toFile)
+              case other => logger.warn(s"Unknown event $other")
+            }
+        }
         //coming soon...
         key.reset()
       }
