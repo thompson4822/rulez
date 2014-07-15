@@ -35,7 +35,6 @@ Examples: Happy path
   | Insert Key     | 1            | should not  |
 
 # This would account for size of cart and mk+ or regular machine
-
 Scenario Outline: Screen hasn't transitioned from key copy in a given number of minutes, create a ticket
   Given we're on key copy progress
   And our kiosk is <Kiosk Type>
@@ -47,7 +46,6 @@ Examples:
   | mk+        | 2            | 4             |
   | standard   | 2            | 3             |
 
-@current
 Scenario Outline: Multiple hardware disconnects within a certain time should create a ticket
   Given we have USB attached hardware device <Device>
   And the disconnect count is <Disconnect Count>
@@ -57,7 +55,6 @@ Examples:
   | Bill Collector   | 1                | no         |
   | Bill Collector   | 3                | yes        |
   | Card Reader      | 3                | yes        |
-
 
 Scenario Outline: Brass almost out should create ticket
   Given a kiosk has brass keys

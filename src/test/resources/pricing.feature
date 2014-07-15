@@ -3,13 +3,18 @@ Feature: Pricing rules
   I should be able to analyze pricing trends
   to determine if there is some problem
 
-Scenario Outline: If there are no purchases on a machine in a certain time, generate a ticket
-  Given a <Grade> machine of A
-  Then I should generate a ticket if no purchases in <Time>
+
+@current
+Scenario Outline: If there are no purchases on a machine by a certain time each day, generate a ticket
+  Given a <Grade> machine
+  Then if <Purchases> purchases by <Time>, I should generate a ticket: <Ticket>
 Examples:
-  | Grade | Time |
-  |  A    | 4    |
-  |  B    | 4    |
+  | Grade | Purchases | Time   | Ticket |
+  |  A    | 0         | 12:00  | yes    |
+  |  A    | 0         | 10:00  | no     |
+  |  A    | 1         | 13:00  | no     |
+  |  B    | 0         | 16:00  | yes    |
+  |  B    | 1         | 12:00  | no     |
 
 # Take into account how holidays and weekends might have an impact
 Scenario Outline: If a machine is deviating in purchases significantly from the day prior, generate a ticket
