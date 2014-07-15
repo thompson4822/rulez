@@ -14,11 +14,11 @@ trait ScreenMonitorService {
   def ticketGenerator: TicketGenerator
 }
 
-class ScreenTimeoutTask(currentScreen: ScreenRecord, ticketGenerator: TicketGenerator) extends TimerTask {
-  override def run(): Unit = {
-    ticketGenerator.create(currentScreen.name)
-  }
-}
+//class ScreenTimeoutTask(currentScreen: ScreenRecord, ticketGenerator: TicketGenerator) extends TimerTask {
+//  override def run(): Unit = {
+//    ticketGenerator.create(currentScreen.name)
+//  }
+//}
 
 class DefaultScreenMonitorService(val currentScreen: ScreenRecord, val ticketGenerator: TicketGenerator) extends ScreenMonitorService {
   import DefaultScreenMonitorService._

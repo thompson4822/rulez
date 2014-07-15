@@ -24,13 +24,11 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
 
   var sut: ScreenMonitorService = _
 
-  var hms: HardwareMonitorService = _
-
-  var kms: KeyMonitorService = _
-
-  var cms: ClickMonitorService = _
+  var ms: MonitorService = _
 
   var kioskType: String = _
+
+  var ticketGenerated: Boolean = _
 
   Given("""^our kiosk is (.*)$"""){ (kioskType: String) =>
     this.kioskType = kioskType
@@ -90,47 +88,11 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
 
   }
 
-
-  /*
-    Given("""^there are (\d+) keys$"""){ (keys:Int) =>
-      keysInCart = keys
-    }
-  */
-
-/*
-  Given("""^there have been more than two consecutive "([^"]*)" surveys$"""){ (arg0:String) =>
-    //// Express the Regexp above with the code you wish you had
-    throw new PendingException()
-  }
-*/
-
-  var ticketGenerated: Boolean = _
-
-/*
-  When("""^time elapsed is > (\d+) minutes$"""){ (elapsed: Int) =>
-    ticketGenerated = elapsed > timeout
-  }
-
-  Then("""^create a ticket$"""){ () =>
-    //// Express the Regexp above with the code you wish you had
-    ticketGenerated should be (true)
-  }
-
-  Then("""^the expected time on this screen is (\d+) minutes$"""){ (minutes: Int) =>
-    true should be (true)
-  }
-
-  Then("""^I should generate a ticket$"""){ () =>
-    //// Express the Regexp above with the code you wish you had
-    throw new PendingException()
-  }
-*/
-
   var device: String = _
 
   Given("""^we have USB attached hardware devices (Bill Collector|Card Reader)$"""){ (dev: String) =>
     device = dev
-    hms = new DefaultHardwareMonitorService(mockTicketGenerator)
+    ms = new DefaultMonitorService(mockTicketGenerator)
   }
 
   var disconnectCnt: Int = _
@@ -141,8 +103,8 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
 
   Then("""^whether to generate a ticket is (yes|no) $"""){ (ticketSent: String) =>
     val timesCalled = if (ticketSent == "yes") 1 else 0
-    hms.disconnectCount(disconnectCnt)
-    hms.checkHardwareStatus
+    ms.disconnectCount(disconnectCnt)
+    ms.checkHardwareStatus
     verify(mockTicketGenerator, times(timesCalled)).create(device)
   }
 
@@ -151,7 +113,7 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
   //
 
   Given("""^a kiosk has brass keys$"""){ () =>
-    kms = new DefaultKeyMonitorService(mockTicketGenerator)
+    ms = new DefaultMonitorService(mockTicketGenerator)
   }
 
   var brassKeyCnt: Int = _
@@ -162,8 +124,8 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
 
   Then("""^whether to generate a brass low ticket is (yes|no)$"""){ (ticketSent: String) =>
     val timesCalled = if (ticketSent == "yes") 1 else 0
-    kms.brassKeyCount(brassKeyCnt)
-    kms.checkKeyStatus
+    ms.brassKeyCount(brassKeyCnt)
+    ms.checkKeyStatus
     verify(mockTicketGenerator, times(timesCalled)).create("Brass keys low")
   }
 
@@ -174,7 +136,7 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
   var clkMockTicketGenerator = mock[TicketGenerator]
   Before("@clickTest") { f: Scenario =>
     clkMockTicketGenerator = mock[TicketGenerator]
-    cms = new DefaultClickMonitorService(clkMockTicketGenerator)
+    ms = new DefaultMonitorService(clkMockTicketGenerator)
   }
 
   var cancelClicksCnt: Int = _
@@ -185,10 +147,44 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
 
   Then("""^whether to generate a ticket is (yes|no)$"""){ (ticketSent: String) =>
     val timesCalled = if (ticketSent == "yes") 1 else 0
-    cms.cancelClickCount(cancelClicksCnt)
-    cms.checkCancelClicks
+    ms.cancelClickCount(cancelClicksCnt)
+    ms.checkCancelClicks
     verify(clkMockTicketGenerator, times(timesCalled)).create("Cash Payment - excessive cancels")
   }
 
+  /*
+  Given("""^there are (\d+) keys$"""){ (keys:Int) =>
+    keysInCart = keys
+  }
+*/
+
+  /*
+    Given("""^there have been more than two consecutive "([^"]*)" surveys$"""){ (arg0:String) =>
+      //// Express the Regexp above with the code you wish you had
+      throw new PendingException()
+    }
+  */
+
+
+
+  /*
+    When("""^time elapsed is > (\d+) minutes$"""){ (elapsed: Int) =>
+      ticketGenerated = elapsed > timeout
+    }
+
+    Then("""^create a ticket$"""){ () =>
+      //// Express the Regexp above with the code you wish you had
+      ticketGenerated should be (true)
+    }
+
+    Then("""^the expected time on this screen is (\d+) minutes$"""){ (minutes: Int) =>
+      true should be (true)
+    }
+
+    Then("""^I should generate a ticket$"""){ () =>
+      //// Express the Regexp above with the code you wish you had
+      throw new PendingException()
+    }
+  */
 }
 

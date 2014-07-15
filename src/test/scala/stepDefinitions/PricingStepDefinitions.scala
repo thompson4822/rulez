@@ -15,14 +15,14 @@ import scala.collection.JavaConversions._
 class PricingStepDefinitions extends ScalaDsl with EN with ShouldMatchers with MockitoSugar {
 
   val mockTicketGenerator = mock[TicketGenerator]
-  var pms: PricingMonitorService = _
+  var ms: MonitorService = _
 
   var machineGrade: String =  _
 
   var noPurchaseMockTicketGenerator = mock[TicketGenerator]
   Before("@clickTest") { f: Scenario =>
     noPurchaseMockTicketGenerator = mock[TicketGenerator]
-    pms = new DefaultPricingMonitorService(noPurchaseMockTicketGenerator)
+    ms = new DefaultMonitorService(noPurchaseMockTicketGenerator)
   }
 
   Given("""^a (A|B) machine$"""){ (grade: String) =>
@@ -31,8 +31,8 @@ class PricingStepDefinitions extends ScalaDsl with EN with ShouldMatchers with M
 
   Then("""^if (\d+) purchases by (\d+):(\d+), I should generate a ticket: (yes|no)$"""){ (purchases: Int, hour: Int, minute: Int, ticketSent:String) =>
     val timesCalled = if (ticketSent == "yes") 1 else 0
-    pms.purchaseCount(0)
-    pms.checkForPurchases
+    ms.purchaseCount(0)
+    ms.checkForPurchases
     verify(noPurchaseMockTicketGenerator, times(timesCalled)).create("No purchases made today.")
   }
 }
