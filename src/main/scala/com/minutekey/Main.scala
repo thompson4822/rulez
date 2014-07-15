@@ -7,6 +7,7 @@ import java.nio.charset.Charset
 import java.nio.file.{Files, Path, FileSystems, Paths}
 import java.nio.file.StandardWatchEventKinds._
 import java.sql.Timestamp
+import java.util.Date
 import java.util.concurrent.TimeUnit
 import akka.actor.{Props, ActorSystem, Actor, ActorRef}
 import akka.event.{LoggingReceive, Logging}
@@ -100,6 +101,7 @@ class FileSystemActor extends Actor {
     case Modified(file) =>
       // Get what changed in the file
       val addedContent = new StringOps(newContent(file)).lines.toList
+      logParser.parse(new Date(file.lastModified()), addedContent)
       // Update the length of the file
       knownFiles(file) = file.length()
       logger.info(s"The file '${file.toString}' just had the following content added: \n$addedContent")

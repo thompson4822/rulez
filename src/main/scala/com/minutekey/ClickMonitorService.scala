@@ -12,7 +12,16 @@ trait ClickMonitorService {
 }
 
 class DefaultClickMonitorService(val ticketGenerator: TicketGenerator) extends ClickMonitorService {
+  /*
+  Things we need:
+  - collection of click records
 
+  Things to do:
+  - by screen, monitor multiple cancels in a session
+
+  - if over multiple subsequent sessions customers are canceling
+
+   */
 
 }
 
