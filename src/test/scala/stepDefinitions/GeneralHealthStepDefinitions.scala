@@ -3,10 +3,11 @@ package stepDefinitions
 import java.sql.Timestamp
 import java.util.Calendar
 
-import com.minutekey.{DefaultScreenMonitorService, KeyMonitorService, DefaultKeyMonitorService, DefaultHardwareMonitorService, ScreenMonitorService, TicketGenerator, HardwareMonitorService}
+import com.minutekey._
 import com.minutekey.model.ScreenRecord
 import cucumber.api.{DataTable, PendingException}
 import cucumber.api.scala.{EN, ScalaDsl}
+import cucumber.api.Scenario
 import org.mockito.Mockito._
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.mock.MockitoSugar
@@ -27,6 +28,8 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
 
   var kms: KeyMonitorService = _
 
+  var cms: ClickMonitorService = _
+
   var kioskType: String = _
 
   Given("""^our kiosk is (.*)$"""){ (kioskType: String) =>
@@ -37,12 +40,12 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
 
   Given("""^we're on key copy progress$"""){ () =>
     //// Express the Regexp above with the code you wish you had
-    throw new PendingException()
+    //throw new PendingException()
   }
 
   Given("""^there are (\d+) keys$"""){ (arg0:Int) =>
     //// Express the Regexp above with the code you wish you had
-    throw new PendingException()
+    //throw new PendingException()
   }
 
   implicit def table2screenRecords(dataTable: DataTable): Seq[ScreenRecord] =
@@ -125,7 +128,7 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
 
   var device: String = _
 
-  Given("""^we have USB attached hardware devices (Bill Collector | Card Reader)$"""){ (dev: String) =>
+  Given("""^we have USB attached hardware devices (Bill Collector|Card Reader)$"""){ (dev: String) =>
     device = dev
     hms = new DefaultHardwareMonitorService(mockTicketGenerator)
   }
@@ -148,8 +151,7 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
   //
 
   Given("""^a kiosk has brass keys$"""){ () =>
-  //// Express the Regexp above with the code you wish you had
-//    throw new PendingException()
+    kms = new DefaultKeyMonitorService(mockTicketGenerator)
   }
 
   var brassKeyCnt: Int = _
@@ -158,10 +160,35 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
     brassKeyCnt = cnt
   }
 
-  Then("""^whether to generate a brass low ticket is (yes | no)$"""){ (ticketSent: String) =>
+  Then("""^whether to generate a brass low ticket is (yes|no)$"""){ (ticketSent: String) =>
     val timesCalled = if (ticketSent == "yes") 1 else 0
     kms.brassKeyCount(brassKeyCnt)
     kms.checkKeyStatus
     verify(mockTicketGenerator, times(timesCalled)).create("Brass keys low")
   }
+
+  //
+  // Cancel clicks test
+  //
+
+  var clkMockTicketGenerator = mock[TicketGenerator]
+  Before("@clickTest") { f: Scenario =>
+    clkMockTicketGenerator = mock[TicketGenerator]
+    cms = new DefaultClickMonitorService(clkMockTicketGenerator)
+  }
+
+  var cancelClicksCnt: Int = _
+
+  Given("""^the number of cancel button clicks is (\d+)$"""){ (cnt:Int) =>
+    cancelClicksCnt = cnt
+  }
+
+  Then("""^whether to generate a ticket is (yes|no)$"""){ (ticketSent: String) =>
+    val timesCalled = if (ticketSent == "yes") 1 else 0
+    cms.cancelClickCount(cancelClicksCnt)
+    cms.checkCancelClicks
+    verify(clkMockTicketGenerator, times(timesCalled)).create("Cash Payment - excessive cancels")
+  }
+
 }
+
