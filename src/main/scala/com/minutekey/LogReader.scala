@@ -6,6 +6,8 @@ import java.util.Date
 import com.minutekey.model._
 import sun.reflect.generics.reflectiveObjects.NotImplementedException
 
+import scala.util.matching.Regex
+
 /**
  * Created by steve on 7/11/14.
  */
@@ -15,7 +17,7 @@ trait LogReader {
 
 import util.matching.Regex
 
-class DefaultLogReader(fileSystem: FileSystem) extends LogReader {
+object RecordParsers {
   implicit class RegexContext(sc: StringContext) {
     def r = new Regex(sc.parts.mkString, sc.parts.tail.map(_ => "x"): _*)
   }
@@ -41,20 +43,42 @@ class DefaultLogReader(fileSystem: FileSystem) extends LogReader {
   val BillAcceptorConnectedParser = parserWithIdentifier("DEBUG - BillAcceptorConnectedEvent:")
   val SurveyResponseParser = parserWithIdentifier("DEBUG - SurveyResponse:")
   val UnknownRecordParser = parserWithIdentifier(".*")
+}
+
+class DefaultLogReader(fileSystem: FileSystem) extends LogReader {
+  import RecordParsers._
 
   def readFile(date: Date, file: File): Seq[LogRecord] = {
     val lines = fileSystem.read(file)
-    lines map {
-      case PageEntryParser(time, payload) => ScreenRecord(date, time, payload)
-      case BillAcceptorDisconnectedParser(time, payload) => BillAcceptorDisconnectedRecord(date, time, payload)
-      case BillAcceptorConnectedParser(time, payload) => BillAcceptorConnectedRecord(date, time, payload)
-      case SurveyResponseParser(time, payload) => SurveyResponseRecord(date, time, payload)
-      case UnknownRecordParser(time, payload) => UnknownRecord(date, time, payload)
+    lines flatMap {
+      case PageEntryParser(time, payload) => Some(ScreenRecord(date, time, payload))
+      case BillAcceptorDisconnectedParser(time, payload) => Some(BillAcceptorDisconnectedRecord(date, time, payload))
+      case BillAcceptorConnectedParser(time, payload) => Some(BillAcceptorConnectedRecord(date, time, payload))
+      case SurveyResponseParser(time, payload) => Some(SurveyResponseRecord(date, time, payload))
+      case _ => None
     }
   }
 
   override def read: Seq[LogRecord] = {
     val files = fileSystem.logFiles
     files.map(record => readFile(record._1, record._2)).flatten.toSeq
+  }
+}
+
+trait LogParser {
+  def parse(date: Date, lines: Seq[String]): Seq[LogRecord]
+}
+
+class DefaultLogParser extends LogParser {
+  import RecordParsers._
+
+  override def parse(date: Date, lines: Seq[String]): Seq[LogRecord] = {
+    lines flatMap {
+      case PageEntryParser(time, payload) => Some(ScreenRecord(date, time, payload))
+      case BillAcceptorDisconnectedParser(time, payload) => Some(BillAcceptorDisconnectedRecord(date, time, payload))
+      case BillAcceptorConnectedParser(time, payload) => Some(BillAcceptorConnectedRecord(date, time, payload))
+      case SurveyResponseParser(time, payload) => Some(SurveyResponseRecord(date, time, payload))
+      case _ => None
+    }
   }
 }

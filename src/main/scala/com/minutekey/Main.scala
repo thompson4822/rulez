@@ -12,6 +12,7 @@ import akka.actor.{Props, ActorSystem, Actor, ActorRef}
 import akka.event.{LoggingReceive, Logging}
 import org.slf4j.LoggerFactory
 import collection.JavaConversions._
+import collection.immutable.StringOps
 import collection.mutable.{Map => MutableMap}
 
 /**
@@ -60,6 +61,7 @@ class FileSystemActor extends Actor {
   val log = Logging(context.system, this)
   val watchServiceTask = new WatchServiceTask(self)
   val watchThread = new Thread(watchServiceTask, "WatchService")
+  val logParser = new DefaultLogParser
 
   // Need a mutable dictionary of file names to file size
   val knownFiles: MutableMap[File, Long] = MutableMap()
@@ -97,7 +99,7 @@ class FileSystemActor extends Actor {
       // Parse into individual case classes
     case Modified(file) =>
       // Get what changed in the file
-      val addedContent = newContent(file)
+      val addedContent = new StringOps(newContent(file)).lines.toList
       // Update the length of the file
       knownFiles(file) = file.length()
       logger.info(s"The file '${file.toString}' just had the following content added: \n$addedContent")
