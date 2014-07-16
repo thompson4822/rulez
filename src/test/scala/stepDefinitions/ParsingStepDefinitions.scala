@@ -5,6 +5,7 @@ import java.util.{Calendar, Date}
 
 import com.minutekey._
 import com.minutekey.model.{LogRecord, ScreenRecord}
+import com.minutekey.parser.{DefaultLogParser, LogParser}
 import cucumber.api.{DataTable, PendingException}
 import cucumber.api.scala.{EN, ScalaDsl}
 import org.mockito.Mockito._
@@ -14,29 +15,22 @@ import scala.collection.JavaConversions._
 /**
  * Created by steve on 7/11/14.
  */
-class TestFileSystem(fileContent: Seq[String]) extends FileSystem {
-  val today = Calendar.getInstance().getTime
-
-  override def logFiles: Map[Date, File] = Map(today -> new File("WUT"))
-
-  override def read(file: File): Seq[String] = fileContent
-}
-
 class ParsingStepDefinitions extends ScalaDsl with EN with ShouldMatchers {
 
-  var fileSystem: FileSystem = _
+  var logData: Seq[String] = Nil
 
-  var sut: LogReader = _
+  var sut: LogParser = _
 
   Given("""^I have the following log:$"""){ (fileContent: DataTable) =>
-    fileSystem = new TestFileSystem(fileContent.raw().flatten.toSeq)
-    sut = new DefaultLogReader(fileSystem)
+    logData = fileContent.raw().flatten.toSeq
+    sut = new DefaultLogParser
   }
 
   var log: Seq[LogRecord] = _
 
-  When("""^I parse the log file$"""){ () =>
-    log = sut.read
+  When("""^I parse the log data"""){ () =>
+    val today = new Date()
+    log = sut.parse(today, logData)
   }
 
   Then("""^I should see the screen "([^"]*)" was visited (\d+) times$"""){ (screenName: String, timesVisited: Int) =>

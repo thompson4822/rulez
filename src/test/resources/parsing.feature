@@ -1,7 +1,7 @@
 @parsing
 Feature: Parsing tests
   As a tool
-  I can parse the logs
+  I can parse log data
   so that I can determine if any errant behavior is happening
 
 Background: Preconditions
@@ -14,7 +14,7 @@ Background: Preconditions
     | 13:56:19.572 DEBUG - Page Entry: [screen=Select Keys, sessionid=640e9f89-b487-4cda-af5a-f0125c2061f9] |
 
 Scenario Outline: I should be able to detect that a screen was visited, as well as how often
-  When I parse the log file
+  When I parse the log data
   Then I should see the screen "<Screen>" was visited <Times Visited> times
 Examples: Sad path
   | Screen       | Times Visited |
@@ -25,5 +25,5 @@ Examples: Happy path
   | Select Keys | 1             |
 
 Scenario: Any screens visited that were not Startup should have a session ID
-  When I parse the log file
+  When I parse the log data
   Then any screen entries that are not "Startup" should contain a session id
