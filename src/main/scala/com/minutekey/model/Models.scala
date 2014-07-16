@@ -6,7 +6,7 @@ import java.util.{Date, Calendar}
 
 trait RecordUtils {
   def timestampFor(date: Date, time: String): Timestamp = {
-    val dateString = s"${date.getYear}-${date.getMonth}-${date.getDay} $time"
+    val dateString = s"${date.getYear + 1900}-${date.getMonth + 1}-${date.getDate} $time"
     val dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS")
     new Timestamp(dateFormat.parse(dateString).getTime)
   }
@@ -18,25 +18,29 @@ trait RecordUtils {
       if(pair.length < 2)
         None
       else
-        Some((pair(0) -> pair(1)))
+        Some(pair(0) -> pair(1))
     }.flatten.toMap
   }
 }
 
-sealed trait LogRecord
+sealed trait LogRecord {
+  def timeOfEntry: Timestamp
+}
 
-case class ScreenRecord(name: String, timeOfEntry: Timestamp, timeoutSeconds: Int, sessionId: Option[String] = None) extends LogRecord {
+case class ScreenRecord(name: String, timeOfEntry: Timestamp, timeoutSeconds: Int, sessionId: Option[String] = None, attributes: Map[String, String]) extends LogRecord {
 }
 
 object ScreenRecord extends RecordUtils {
+/*
   def apply(name: String, timeoutSeconds: Int): ScreenRecord = {
     val now = new Timestamp(Calendar.getInstance().getTimeInMillis)
     ScreenRecord(name, now, timeoutSeconds)
   }
+*/
 
   def apply(date: Date, time: String, payload: String): ScreenRecord = {
     val attributes = payloadToMap(payload)
-    ScreenRecord(name = attributes("screen"), timeOfEntry = timestampFor(date, time), timeoutSeconds = 3, sessionId = attributes.get("sessionid"))
+    ScreenRecord(name = attributes("screen"), timeOfEntry = timestampFor(date, time), timeoutSeconds = 3, sessionId = attributes.get("sessionid"), attributes)
   }
 }
 

@@ -24,7 +24,7 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
 
   var sut: ScreenMonitorService = _
 
-  var ms: MonitorService = _
+  var ms: DefaultMonitorService = _
 
   var kioskType: String = _
 
@@ -147,7 +147,7 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
 
   Then("""^whether to generate a ticket is (yes|no)$"""){ (ticketSent: String) =>
     val timesCalled = if (ticketSent == "yes") 1 else 0
-    ms.cancelClickCount(cancelClicksCnt)
+    ms.cancelClicksExceeded(cancelClicksCnt)
     ms.checkCancelClicks
     verify(clkMockTicketGenerator, times(timesCalled)).create("Cash Payment - excessive cancels")
   }

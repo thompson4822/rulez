@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory
  * Created by steve on 7/9/14.
  */
 
-// This should probably be derived from a properties file in the future
+// TODO - This should probably be derived from a properties file in the future
 object Configuration {
   val logPath = "/var/log/minutekey"
 }
@@ -18,6 +18,7 @@ object Configuration {
 object Main {
   def logger = LoggerFactory.getLogger("default")
 
+  // Note that the approach used here was adapted from http://www.nurkiewicz.com/2013/04/watchservice-combined-with-akka-actors.html
   def main(args: Array[String]) {
     val system = ActorSystem()
     val fsActor = system.actorOf(Props[FileSystemActor], "fileSystem")

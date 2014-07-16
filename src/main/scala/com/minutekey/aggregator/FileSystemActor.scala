@@ -9,6 +9,7 @@ import java.util.Date
 
 import akka.actor.Actor
 import akka.event.{Logging, LoggingReceive}
+import com.minutekey.{DefaultMonitorService, MonitorService}
 import com.minutekey.parser.DefaultLogParser
 import org.slf4j.LoggerFactory
 
@@ -25,8 +26,9 @@ class FileSystemActor extends Actor {
   val watchServiceTask = new WatchServiceTask(self)
   val watchThread = new Thread(watchServiceTask, "WatchService")
   val logParser = new DefaultLogParser
+  val monitor: MonitorService = new DefaultMonitorService
 
-  // Need a mutable dictionary of file names to file size
+  // Mutable dictionary of files and their last known size
   val knownFiles: MutableMap[File, Long] = MutableMap()
 
   override def preStart() {
@@ -38,6 +40,7 @@ class FileSystemActor extends Actor {
     watchThread.interrupt()
   }
 
+  // Gets any changes in the given file, or the whole file if it was just created
   def newContent(file: File): String = {
     val randomAccessFile = new RandomAccessFile(file, "r")
     val startPosition = knownFiles(file)
@@ -51,22 +54,26 @@ class FileSystemActor extends Actor {
   def receive = LoggingReceive {
     case MonitorDir(path) =>
       watchServiceTask.watch(path)
-      // For each existing file in the directory, we need to call created to have it initially read and parsed
-      logger.info(s"We're now going to monitor ${path.toString}")
       val directoryStream = Files.newDirectoryStream(path)
-      val files = directoryStream.map(_.toFile)
+      // Grab all the files for this directory
+      // TODO - Only grab the last XX days of log file data
+      val files = directoryStream.flatMap { item =>
+        if(!Files.isDirectory(item)) Some(item) else None
+      }.map(_.toFile)
       files.map(file => self ! Created(file))
     case Created(file) =>
-      logger.info(s"The file '${file.toString}' was just created")
-      knownFiles(file) = file.length()
-      // Parse into individual case classes
+      // Set the initial size to 0 so that the whole file is read in
+      knownFiles(file) = 0
+      // Trigger a modified event to parse the file
+      // TODO - If the file is before today, parse it and add to monitor without kicking off the ticket checking logic
+      self ! Modified(file)
     case Modified(file) =>
-      // Get what changed in the file
+      // Get the changes made to the file
       val addedContent = new StringOps(newContent(file)).lines.toList
-      logParser.parse(new Date(file.lastModified()), addedContent)
       // Update the length of the file
       knownFiles(file) = file.length()
-      logger.info(s"The file '${file.toString}' just had the following content added: \n$addedContent")
-
+      // Parse the modifications
+      val records = logParser.parse(new Date(file.lastModified()), addedContent)
+      monitor.add(records)
   }
 }

@@ -15,7 +15,7 @@ import scala.collection.JavaConversions._
 class PricingStepDefinitions extends ScalaDsl with EN with ShouldMatchers with MockitoSugar {
 
   val mockTicketGenerator = mock[TicketGenerator]
-  var ms: MonitorService = _
+  var ms: DefaultMonitorService = _
 
   var machineGrade: String =  _
 
