@@ -27,16 +27,14 @@ sealed trait LogRecord {
   def timeOfEntry: Timestamp
 }
 
-case class ScreenRecord(name: String, timeOfEntry: Timestamp, timeoutSeconds: Int, sessionId: Option[String] = None, attributes: Map[String, String]) extends LogRecord {
+case class ScreenRecord(name: String, timeOfEntry: Timestamp, timeoutSeconds: Int, sessionId: Option[String] = None, attributes: Map[String, String] = Map()) extends LogRecord {
 }
 
 object ScreenRecord extends RecordUtils {
-/*
   def apply(name: String, timeoutSeconds: Int): ScreenRecord = {
     val now = new Timestamp(Calendar.getInstance().getTimeInMillis)
     ScreenRecord(name, now, timeoutSeconds)
   }
-*/
 
   def apply(date: Date, time: String, payload: String): ScreenRecord = {
     val attributes = payloadToMap(payload)

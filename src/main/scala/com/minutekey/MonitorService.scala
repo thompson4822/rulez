@@ -8,8 +8,6 @@ import com.minutekey.model.LogRecord
 trait MonitorService {
   def add(records: Seq[LogRecord])
 
-  def ticketGenerator: TicketGenerator
-
   def checkKiosk(): Unit
 
   def checkHardwareStatus(): Unit
@@ -19,7 +17,6 @@ trait MonitorService {
   def brassKeysLow(): Unit
 
   def checkForPurchases(): Unit
-
 
   def purchaseCount: Int
 

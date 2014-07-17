@@ -10,7 +10,7 @@ import java.util.{Calendar, Date}
 import akka.actor.Actor
 import akka.event.{Logging, LoggingReceive}
 import com.minutekey.model.LogRecord
-import com.minutekey.{Configuration, DefaultMonitorService, MonitorService}
+import com.minutekey.{DefaultTicketGenerator, Configuration, DefaultMonitorService, MonitorService}
 import com.minutekey.parser.DefaultLogParser
 import org.slf4j.LoggerFactory
 
@@ -27,7 +27,7 @@ class FileSystemActor extends Actor {
   val watchServiceTask = new WatchServiceTask(self)
   val watchThread = new Thread(watchServiceTask, "WatchService")
   val logParser = new DefaultLogParser
-  val monitor: MonitorService = new DefaultMonitorService
+  val monitor: MonitorService = new DefaultMonitorService(new DefaultTicketGenerator)
 
   // Mutable dictionary of files and their last known size
   val knownFiles: MutableMap[File, Long] = MutableMap()

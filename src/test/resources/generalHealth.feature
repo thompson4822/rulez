@@ -15,6 +15,10 @@ Examples:
   | 3                  | yes        |
   | 5                  | yes        |
 
+# Could also be:
+# Scenario: If the cancel button is pressed multiple times sequentially in a screen, generate a ticket
+#    When the cancel button has been pressed multiple times for the current screen
+
 Scenario Outline: If the customer's last screen was not remove key, create a ticket
   Given the customer's last screen is "<Last Screen>"
   Then whether to generate a ticket is <Gen Ticket>
@@ -46,21 +50,14 @@ Examples:
   | mk+        | 2            | 4             |
   | standard   | 2            | 3             |
 
-Scenario Outline: Multiple hardware disconnects within a certain time should create a ticket
-  Given we have USB attached hardware device <Device>
-  And the disconnect count is <Disconnect Count>
-  Then whether to generate a ticket is <Gen Ticket>
-Examples:
-  | Device           | Disconnect Count | Gen Ticket |
-  | Bill Collector   | 1                | no         |
-  | Bill Collector   | 3                | yes        |
-  | Card Reader      | 3                | yes        |
+#Scenario Outline: Multiple hardware disconnects within a certain time should create a ticket
+#  Given we have USB attached hardware device <Device>
+#  And the disconnect count is <Disconnect Count>
+#  Then whether to generate a ticket is <Gen Ticket>
+#Examples:
+#  | Device           | Disconnect Count | Gen Ticket |
+#  | Bill Collector   | 1                | no         |
+#  | Bill Collector   | 3                | yes        |
+#  | Card Reader      | 3                | yes        |
 
-Scenario Outline: Brass almost out should create ticket
-  Given a kiosk has brass keys
-  And the number of keys remaining is <Brass Count>
-  Then whether to generate a brass low ticket is <Gen Ticket>
-Examples:
-  | Brass Count | Gen Ticket |
-  | 100         | no         |
-  | 9           | yes        |
+
