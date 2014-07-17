@@ -1,12 +1,10 @@
 package com.minutekey
 
 import java.sql.Timestamp
-import com.typesafe.config._
 import com.minutekey.model._
+import com.minutekey.Configuration._
 import java.util.{Date, Calendar, Timer, TimerTask}
-
 import org.slf4j.LoggerFactory
-
 import scala.collection.mutable.ListBuffer
 
 class DefaultMonitorService extends MonitorService {
@@ -16,10 +14,6 @@ class DefaultMonitorService extends MonitorService {
 
   var currentScreen: ScreenRecord = _
   var timer: Timer = new Timer()
-
-  val conf: Config = ConfigFactory.load()
-  var brassLowAmount: Int = conf.getInt("brassLowAmount")
-  var billAcceptorDisconnectLimit: Int = conf.getInt("billAcceptorDisconnectLimit")
 
   def pack[A](ls: List[A]): List[List[A]] = {
     if (ls.isEmpty) List(List())
@@ -37,8 +31,6 @@ class DefaultMonitorService extends MonitorService {
   def purchasesToday: Int = {
     ???
   }
-
-
 
   def ticketGenerator: TicketGenerator = new TicketGenerator {
     override def create(msg: String): Unit = logger.error(msg)
@@ -71,7 +63,7 @@ class DefaultMonitorService extends MonitorService {
       .collect{ case record: BillAcceptorDisconnectedRecord => record }
       .count(r => r.description == "Acceptor disconnected")
 
-      if (billAcceptorDisconnects > billAcceptorDisconnectLimit) {
+      if (billAcceptorDisconnects > Configuration.billAcceptorDisconnectLimit) {
         ticketGenerator.create(s"Bill Collector disconnected $billAcceptorDisconnects times today")
       }
   }
@@ -80,7 +72,7 @@ class DefaultMonitorService extends MonitorService {
     val brassKeysLowCount = logRecords.filter(record => isToday(record.timeOfEntry) && record.timeOfEntry.getTime >= timeSinceLastCheck)
       .collect{ case record: KeyEjectRecord => record }
       .filter(r => r.SKU.contains("BRAS"))
-      .count(r => r.quantity < brassLowAmount)
+      .count(r => r.quantity < Configuration.brassLowAmount)
 
     if (brassKeysLowCount > 0) {
       ticketGenerator.create(s"Brass keys low.  Less than $brassLowAmount remain of one or more SKU.")

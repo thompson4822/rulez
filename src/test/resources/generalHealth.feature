@@ -5,6 +5,15 @@ Background: Preconditions
     | Screen            | Timeout |
     | Insert Key        | 3       |
 
+  And I have the following log:
+    | 09:27:00.661 DEBUG - Page Entry: [screen=Startup] |
+    | 13:52:37.986 DEBUG - BillAcceptorDisconnectedEvent: [Description=Acceptor disconnected, username=Unknown, level=0] |
+    | 13:53:00.846 DEBUG - BillAcceptorConnectedEvent: [Description=Acceptor connected, username=Unknown, level=0]       |
+    | 13:56:19.565 DEBUG - SurveyResponse: [SurveyResponse=GoBack, sessionid=640e9f89-b487-4cda-af5a-f0125c2061f9, Screen=Survey, level=0, message=] |
+    | 09:41:00.251 DEBUG - Page Entry: [screen=Startup] |
+    | 13:56:19.572 DEBUG - Page Entry: [screen=Select Keys, sessionid=640e9f89-b487-4cda-af5a-f0125c2061f9] |
+
+
 @clickTest
 Scenario Outline: If the cancel button is being hit repeatedly for a particular screen, create a ticket
   Given the number of cancel button clicks is <Cancel Click Count>
@@ -46,6 +55,7 @@ Examples:
   | mk+        | 2            | 4             |
   | standard   | 2            | 3             |
 
+@current
 Scenario Outline: Multiple hardware disconnects within a certain time should create a ticket
   Given we have USB attached hardware device <Device>
   And the disconnect count is <Disconnect Count>

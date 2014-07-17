@@ -4,7 +4,7 @@ Feature: Pricing rules
   to determine if there is some problem
 
 
-@current
+
 Scenario Outline: If there are no purchases on a machine by a certain time each day, generate a ticket
   Given a <Grade> machine
   Then if <Purchases> purchases by <Time>, I should generate a ticket: <Ticket>

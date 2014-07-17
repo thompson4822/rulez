@@ -20,7 +20,6 @@ trait MonitorService {
 
   def checkForPurchases(): Unit
 
-
   def purchaseCount: Int
 
   def purchaseWindowHours: Int

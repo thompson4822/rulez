@@ -5,6 +5,7 @@ import java.nio.file.Paths
 import akka.actor.{ActorSystem, Props}
 import com.minutekey.aggregator.{FileSystemActor, MonitorDir}
 import org.slf4j.LoggerFactory
+import com.typesafe.config._
 
 /**
  * Created by steve on 7/9/14.
@@ -14,7 +15,10 @@ import org.slf4j.LoggerFactory
 object Configuration {
   val logPath = "/var/log/minutekey"
 
-  val daysOfInterest = 7 // Originally we are just going to look back 1 week in time
+  val conf: Config = ConfigFactory.load()
+  var brassLowAmount: Int = conf.getInt("brassLowAmount")
+  var billAcceptorDisconnectLimit: Int = conf.getInt("billAcceptorDisconnectLimit")
+  val daysOfInterest = conf.getInt("daysOfInterest")
 }
 
 object Main {
