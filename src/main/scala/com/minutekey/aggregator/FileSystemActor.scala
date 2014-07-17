@@ -5,11 +5,12 @@ import java.nio.CharBuffer
 import java.nio.channels.FileChannel.MapMode
 import java.nio.charset.Charset
 import java.nio.file.Files
-import java.util.Date
+import java.util.{Calendar, Date}
 
 import akka.actor.Actor
 import akka.event.{Logging, LoggingReceive}
-import com.minutekey.{DefaultMonitorService, MonitorService}
+import com.minutekey.model.LogRecord
+import com.minutekey.{Configuration, DefaultMonitorService, MonitorService}
 import com.minutekey.parser.DefaultLogParser
 import org.slf4j.LoggerFactory
 
@@ -40,6 +41,15 @@ class FileSystemActor extends Actor {
     watchThread.interrupt()
   }
 
+  // Is the timestamp for the file within X number of days ago?
+  def withinExpectedDays(file: File): Boolean = {
+    val oldest = Calendar.getInstance()
+    oldest.add(Calendar.DAY_OF_YEAR, -Configuration.daysOfInterest)
+    val date = Calendar.getInstance
+    date.setTimeInMillis(file.lastModified())
+    return date.after(oldest)
+  }
+
   // Gets any changes in the given file, or the whole file if it was just created
   def newContent(file: File): String = {
     val randomAccessFile = new RandomAccessFile(file, "r")
@@ -51,16 +61,30 @@ class FileSystemActor extends Actor {
     chars.toString
   }
 
+  // Get all records from a file
+  def recordsFromFile(file: File): Seq[LogRecord] = {
+    val addedContent = new StringOps(newContent(file)).lines.toList
+    logParser.parse(new Date(file.lastModified()), addedContent)
+  }
+
   def receive = LoggingReceive {
     case MonitorDir(path) =>
       watchServiceTask.watch(path)
       val directoryStream = Files.newDirectoryStream(path)
       // Grab all the files for this directory
-      // TODO - Only grab the last XX days of log file data
       val files = directoryStream.flatMap { item =>
-        if(!Files.isDirectory(item)) Some(item) else None
+        if(!Files.isDirectory(item) && withinExpectedDays(item.toFile)) Some(item) else None
       }.map(_.toFile)
-      files.map(file => self ! Created(file))
+
+      // Turn all of the file data that we care about into records
+      val records: Iterable[LogRecord] = files.flatMap { file =>
+        // Set the initial size to 0 so that the whole file is read in
+        knownFiles(file) = 0
+        // Get the records from the file
+        recordsFromFile(file)
+      }
+      // Kick off the monitor
+      monitor.add(records.toSeq)
     case Created(file) =>
       // Set the initial size to 0 so that the whole file is read in
       knownFiles(file) = 0
@@ -68,12 +92,8 @@ class FileSystemActor extends Actor {
       // TODO - If the file is before today, parse it and add to monitor without kicking off the ticket checking logic
       self ! Modified(file)
     case Modified(file) =>
-      // Get the changes made to the file
-      val addedContent = new StringOps(newContent(file)).lines.toList
-      // Update the length of the file
+      val records = recordsFromFile(file)
       knownFiles(file) = file.length()
-      // Parse the modifications
-      val records = logParser.parse(new Date(file.lastModified()), addedContent)
       monitor.add(records)
   }
 }
