@@ -2,7 +2,7 @@ package com.minutekey
 
 import java.sql.Timestamp
 
-import com.minutekey.model.{ButtonClickRecord, LogRecord, ScreenRecord}
+import com.minutekey.model._
 import java.util.{Date, Calendar, Timer, TimerTask}
 
 import org.slf4j.LoggerFactory
@@ -50,7 +50,7 @@ class DefaultMonitorService extends MonitorService {
 
   def cancelClicksExceeded: Option[String] = {
     val screenCancels: List[String] = logRecords.filter(record => isToday(record.timeOfEntry) && record.timeOfEntry.getTime >= timeSinceLastCheck)
-      .collect { case record: ButtonClickRecord => record}
+      .collect { case record: ButtonClickRecord => record }
       .filter(_.button == "Cancel")
       .map(_.screen)
       .toList
@@ -58,21 +58,32 @@ class DefaultMonitorService extends MonitorService {
     pack(screenCancels).find(list => list.length > 1).map(_.head)
   }
 
-  def disconnectCount: Int = 0
-  def brassKeyCount: Int = 0
-
-  override def checkHardwareStatus(): Unit = {
-    if (disconnectCount > 1)
-      ticketGenerator.create("Bill Collector")
-  }
-
   override def checkCancelClicks(): Unit = {
     cancelClicksExceeded.map(screen => ticketGenerator.create(s"Excessive cancels on screen ${screen}"))
   }
 
-  override def checkKeyStatus(): Unit = {
-    if (brassKeyCount < 20)
-      ticketGenerator.create("Brass keys low")
+  override def checkHardwareStatus(): Unit = {
+    val billAcceptorDisconnects = logRecords.filter(record => isToday(record.timeOfEntry))
+      .collect{ case record: BillAcceptorDisconnectedRecord => record }
+      .count(r => r.description == "Acceptor disconnected")
+
+      if (billAcceptorDisconnects > 1) {
+        ticketGenerator.create(s"Bill Collector disconnected $billAcceptorDisconnects times today")
+      }
+  }
+
+  //TODO configurable brassLowAmount
+  var brassLowAmount = 50
+  override def brassKeysLow(): Unit = {
+    val brassKeysLowCount = logRecords.filter(record => isToday(record.timeOfEntry) && record.timeOfEntry.getTime >= timeSinceLastCheck)
+      .collect{ case record: KeyEjectRecord => record }
+      .filter(r => r.SKU.contains("BRAS"))
+      .count(r => r.quantity < brassLowAmount)
+
+    if (brassKeysLowCount > 0) {
+      ticketGenerator.create(s"Brass keys low.  Less than $brassLowAmount remain of one or more SKU.")
+    }
+
   }
 
   // When was the last time we checked for purchases after noon today
@@ -129,7 +140,7 @@ class DefaultMonitorService extends MonitorService {
   override def checkKiosk: Unit = {
     if(lastCheckTime == null || timeSinceLastCheck > minutes(30)) {
       checkCancelClicks()
-      checkKeyStatus()
+      brassKeysLow()
       if(afterNoon)
         checkForPurchases()
       lastCheckTime = new Timestamp(Calendar.getInstance().getTimeInMillis)
