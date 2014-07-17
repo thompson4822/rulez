@@ -13,6 +13,8 @@ import org.slf4j.LoggerFactory
 // TODO - This should probably be derived from a properties file in the future
 object Configuration {
   val logPath = "/var/log/minutekey"
+
+  val daysOfInterest = 7 // Originally we are just going to look back 1 week in time
 }
 
 object Main {
