@@ -16,13 +16,10 @@ trait MonitorService {
 
   def checkCancelClicks(): Unit
 
-  def checkKeyStatus(): Unit
+  def brassKeysLow(): Unit
 
   def checkForPurchases(): Unit
 
-  def brassKeyCount: Int
-
-  def disconnectCount: Int
 
   def purchaseCount: Int
 
