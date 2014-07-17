@@ -1,10 +1,11 @@
 package stepDefinitions
 
 import java.sql.Timestamp
-import java.util.Calendar
+import java.util.{Date, Calendar}
 
 import com.minutekey._
-import com.minutekey.model.ScreenRecord
+import com.minutekey.model._
+import com.minutekey.parser._
 import cucumber.api.{DataTable, PendingException}
 import cucumber.api.scala.{EN, ScalaDsl}
 import cucumber.api.Scenario
@@ -17,18 +18,34 @@ import scala.collection.JavaConversions._
  * Created by steve on 7/10/14.
  */
 class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers with MockitoSugar {
+  var logData: Seq[String] = Nil
+
+  var sut: LogParser = _
+
+//  Given("""^I have the following log:$"""){ (fileContent: DataTable) =>
+//    logData = fileContent.raw().flatten.toSeq
+//    sut = new DefaultLogParser
+//  }
+//  When("""^I parse the log data"""){ () =>
+  //    val today = new Date()
+  //    log = sut.parse(today, logData)
+  //  }
+
+  var log: Seq[LogRecord] = _
 
   var timeout: Int = _
 
   val mockTicketGenerator = mock[TicketGenerator]
 
-  var sut: ScreenMonitorService = _
+  var sms: ScreenMonitorService = _
 
   var monitorService: DefaultMonitorService = _
 
   var kioskType: String = _
 
   var ticketGenerated: Boolean = _
+
+
 
   Given("""^our kiosk is (.*)$"""){ (kioskType: String) =>
     this.kioskType = kioskType
@@ -74,7 +91,7 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
 
   When("""^time elapsed is (\d+) seconds$"""){ (elapsedSeconds: Int) =>
     currentScreen = adjustWhenStarted(currentScreen, elapsedSeconds)
-    sut = new DefaultScreenMonitorService(currentScreen, mockTicketGenerator)
+    sms = new DefaultScreenMonitorService(currentScreen, mockTicketGenerator)
   }
 
   //set up Before to avoid timer getting called on 1 sec case
@@ -88,6 +105,10 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
 
   }
 
+  //
+  //Hardware disconnect test
+  //
+
   var device: String = _
 
   Given("""^we have USB attached hardware devices (Bill Collector|Card Reader)$"""){ (dev: String) =>
@@ -95,15 +116,8 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
     monitorService = new DefaultMonitorService(mockTicketGenerator)
   }
 
-  var disconnectCnt: Int = _
-
-  Given("""^the disconnect count is (\d+)$"""){ (cnt:Int) =>
-    disconnectCnt = cnt
-  }
-
   Then("""^whether to generate a ticket is (yes|no) $"""){ (ticketSent: String) =>
     val timesCalled = if (ticketSent == "yes") 1 else 0
-    monitorService.disconnectCount(disconnectCnt)
     monitorService.checkHardwareStatus
     verify(mockTicketGenerator, times(timesCalled)).create(device)
   }
@@ -124,8 +138,7 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
 
   Then("""^whether to generate a brass low ticket is (yes|no)$"""){ (ticketSent: String) =>
     val timesCalled = if (ticketSent == "yes") 1 else 0
-    monitorService.brassKeyCount(brassKeyCnt)
-    monitorService.checkKeyStatus
+    monitorService.brassKeysLow()
     verify(mockTicketGenerator, times(timesCalled)).create("Brass keys low")
   }
 
@@ -147,7 +160,6 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
 
   Then("""^whether to generate a ticket is (yes|no)$"""){ (ticketSent: String) =>
     val timesCalled = if (ticketSent == "yes") 1 else 0
-    monitorService.cancelClicksExceeded(cancelClicksCnt)
     monitorService.checkCancelClicks
     verify(clkMockTicketGenerator, times(timesCalled)).create("Cash Payment - excessive cancels")
   }

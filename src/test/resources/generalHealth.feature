@@ -12,9 +12,10 @@ Background: Preconditions
     | 13:56:19.565 DEBUG - SurveyResponse: [SurveyResponse=GoBack, sessionid=640e9f89-b487-4cda-af5a-f0125c2061f9, Screen=Survey, level=0, message=] |
     | 09:41:00.251 DEBUG - Page Entry: [screen=Startup] |
     | 13:56:19.572 DEBUG - Page Entry: [screen=Select Keys, sessionid=640e9f89-b487-4cda-af5a-f0125c2061f9] |
+    | 12:46:46.798 DEBUG - KeyEject: [Stack=9, sessionid=507d4452-589f-4fa4-894a-e8860f9aca63, Quantity=30, SKU=KSCJMB00001BRAS, level=0, message=] |
 
 
-@clickTest
+  @clickTest
 Scenario Outline: If the cancel button is being hit repeatedly for a particular screen, create a ticket
   Given the number of cancel button clicks is <Cancel Click Count>
   Then whether to generate a ticket is <Gen Ticket>
@@ -58,12 +59,11 @@ Examples:
 @current
 Scenario Outline: Multiple hardware disconnects within a certain time should create a ticket
   Given we have USB attached hardware device <Device>
-  And the disconnect count is <Disconnect Count>
+  When I parse the log data
   Then whether to generate a ticket is <Gen Ticket>
 Examples:
-  | Device           | Disconnect Count | Gen Ticket |
-  | Bill Collector   | 1                | no         |
-  | Bill Collector   | 3                | yes        |
-  | Card Reader      | 3                | yes        |
+  | Device           | Gen Ticket |
+  | Bill Collector   | no         |
+  | Bill Collector   | yes        |
 
 

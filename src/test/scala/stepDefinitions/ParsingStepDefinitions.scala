@@ -42,5 +42,4 @@ class ParsingStepDefinitions extends ScalaDsl with EN with ShouldMatchers {
     screenRecords.flatMap(_.sessionId).length should be (screenRecords.length)
 
   }
-
 }
