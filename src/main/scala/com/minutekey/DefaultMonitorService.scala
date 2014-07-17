@@ -1,7 +1,7 @@
 package com.minutekey
 
 import java.sql.Timestamp
-
+import com.typesafe.config._
 import com.minutekey.model._
 import java.util.{Date, Calendar, Timer, TimerTask}
 
@@ -16,6 +16,10 @@ class DefaultMonitorService extends MonitorService {
 
   var currentScreen: ScreenRecord = _
   var timer: Timer = new Timer()
+
+  val conf: Config = ConfigFactory.load()
+  var brassLowAmount: Int = conf.getInt("brassLowAmount")
+  var billAcceptorDisconnectLimit: Int = conf.getInt("billAcceptorDisconnectLimit")
 
   def pack[A](ls: List[A]): List[List[A]] = {
     if (ls.isEmpty) List(List())
@@ -67,13 +71,11 @@ class DefaultMonitorService extends MonitorService {
       .collect{ case record: BillAcceptorDisconnectedRecord => record }
       .count(r => r.description == "Acceptor disconnected")
 
-      if (billAcceptorDisconnects > 1) {
+      if (billAcceptorDisconnects > billAcceptorDisconnectLimit) {
         ticketGenerator.create(s"Bill Collector disconnected $billAcceptorDisconnects times today")
       }
   }
 
-  //TODO configurable brassLowAmount
-  var brassLowAmount = 50
   override def brassKeysLow(): Unit = {
     val brassKeysLowCount = logRecords.filter(record => isToday(record.timeOfEntry) && record.timeOfEntry.getTime >= timeSinceLastCheck)
       .collect{ case record: KeyEjectRecord => record }
