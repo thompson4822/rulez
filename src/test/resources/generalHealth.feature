@@ -66,11 +66,4 @@ Examples:
   | Bill Collector   | 3                | yes        |
   | Card Reader      | 3                | yes        |
 
-Scenario Outline: Brass almost out should create ticket
-  Given a kiosk has brass keys
-  And the number of keys remaining is <Brass Count>
-  Then whether to generate a brass low ticket is <Gen Ticket>
-Examples:
-  | Brass Count | Gen Ticket |
-  | 100         | no         |
-  | 9           | yes        |
+

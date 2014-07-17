@@ -24,7 +24,7 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
 
   var sut: ScreenMonitorService = _
 
-  var ms: DefaultMonitorService = _
+  var monitorService: DefaultMonitorService = _
 
   var kioskType: String = _
 
@@ -92,8 +92,10 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
 
   Given("""^we have USB attached hardware devices (Bill Collector|Card Reader)$"""){ (dev: String) =>
     device = dev
-    ms = new DefaultMonitorService()
+    monitorService = new DefaultMonitorService(mockTicketGenerator)
   }
+
+  var disconnectCnt: Int = _
 
   Given("""^the disconnect count is (\d+)$"""){ (cnt:Int) =>
     disconnectCnt = cnt
@@ -101,7 +103,8 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
 
   Then("""^whether to generate a ticket is (yes|no) $"""){ (ticketSent: String) =>
     val timesCalled = if (ticketSent == "yes") 1 else 0
-    ms.checkHardwareStatus
+    monitorService.disconnectCount(disconnectCnt)
+    monitorService.checkHardwareStatus
     verify(mockTicketGenerator, times(timesCalled)).create(device)
   }
 
@@ -110,7 +113,7 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
   //
 
   Given("""^a kiosk has brass keys$"""){ () =>
-    ms = new DefaultMonitorService()
+    monitorService = new DefaultMonitorService(mockTicketGenerator)
   }
 
   var brassKeyCnt: Int = _
@@ -121,8 +124,8 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
 
   Then("""^whether to generate a brass low ticket is (yes|no)$"""){ (ticketSent: String) =>
     val timesCalled = if (ticketSent == "yes") 1 else 0
-    ms.brassKeyCount(brassKeyCnt)
-    ms.checkKeyStatus
+    monitorService.brassKeyCount(brassKeyCnt)
+    monitorService.checkKeyStatus
     verify(mockTicketGenerator, times(timesCalled)).create("Brass keys low")
   }
 
@@ -130,10 +133,10 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
   // Cancel clicks test
   //
 
-//  var clkMockTicketGenerator = mock[TicketGenerator]
+  var clkMockTicketGenerator = mock[TicketGenerator]
   Before("@clickTest") { f: Scenario =>
-//    clkMockTicketGenerator = mock[TicketGenerator]
-    ms = new DefaultMonitorService()
+    clkMockTicketGenerator = mock[TicketGenerator]
+    monitorService = new DefaultMonitorService(clkMockTicketGenerator)
   }
 
   var cancelClicksCnt: Int = _
@@ -144,8 +147,8 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
 
   Then("""^whether to generate a ticket is (yes|no)$"""){ (ticketSent: String) =>
     val timesCalled = if (ticketSent == "yes") 1 else 0
-    ms.cancelClicksExceeded(cancelClicksCnt)
-    ms.checkCancelClicks
+    monitorService.cancelClicksExceeded(cancelClicksCnt)
+    monitorService.checkCancelClicks
     verify(clkMockTicketGenerator, times(timesCalled)).create("Cash Payment - excessive cancels")
   }
 

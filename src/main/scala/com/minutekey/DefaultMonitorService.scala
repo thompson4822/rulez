@@ -7,7 +7,7 @@ import java.util.{Date, Calendar, Timer, TimerTask}
 import org.slf4j.LoggerFactory
 import scala.collection.mutable.ListBuffer
 
-class DefaultMonitorService extends MonitorService {
+class DefaultMonitorService(ticketGenerator: TicketGenerator) extends MonitorService {
   def logger = LoggerFactory.getLogger("default")
 
   val logRecords: ListBuffer[LogRecord] = new ListBuffer[LogRecord]
@@ -30,10 +30,6 @@ class DefaultMonitorService extends MonitorService {
 
   def purchasesToday: Int = {
     ???
-  }
-
-  def ticketGenerator: TicketGenerator = new TicketGenerator {
-    override def create(msg: String): Unit = logger.error(msg)
   }
 
   def purchaseCount: Int = {
