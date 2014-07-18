@@ -5,6 +5,7 @@ import java.util.{Date, Calendar}
 
 import com.minutekey._
 import com.minutekey.model._
+import com.minutekey.monitor.DefaultMonitorService
 import com.minutekey.parser._
 import cucumber.api.{DataTable, PendingException}
 import cucumber.api.scala.{EN, ScalaDsl}
@@ -37,7 +38,9 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
 
   val mockTicketGenerator = mock[TicketGenerator]
 
+/*
   var sms: ScreenMonitorService = _
+*/
 
   var monitorService: DefaultMonitorService = _
 
@@ -84,14 +87,20 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
   private def now = new Timestamp(Calendar.getInstance().getTimeInMillis)
 
   private def adjustWhenStarted(screen: ScreenRecord, secondsAgo: Int): ScreenRecord = {
+    ???
+/*
     val start = Calendar.getInstance()
     start.add(Calendar.SECOND, -secondsAgo)
     screen.copy(timeOfEntry = new Timestamp(start.getTimeInMillis))
+*/
   }
 
   When("""^time elapsed is (\d+) seconds$"""){ (elapsedSeconds: Int) =>
+    ???
+/*
     currentScreen = adjustWhenStarted(currentScreen, elapsedSeconds)
     sms = new DefaultScreenMonitorService(currentScreen, mockTicketGenerator)
+*/
   }
 
   //set up Before to avoid timer getting called on 1 sec case

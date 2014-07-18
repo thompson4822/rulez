@@ -1,19 +1,22 @@
-package com.minutekey
+package com.minutekey.monitor
 
-import java.sql.Timestamp
-import com.minutekey.model._
+import com.github.nscala_time.time.Imports._
 import com.minutekey.Configuration._
-import java.util.{Date, Calendar, Timer, TimerTask}
+import com.minutekey.model._
+import com.minutekey.{Configuration, TicketGenerator}
 import org.slf4j.LoggerFactory
+
 import scala.collection.mutable.ListBuffer
 
+/**
+ * Created by steve on 7/18/14.
+ */
 class DefaultMonitorService(ticketGenerator: TicketGenerator) extends MonitorService {
   def logger = LoggerFactory.getLogger("default")
 
   val logRecords: ListBuffer[LogRecord] = new ListBuffer[LogRecord]
 
   var currentScreen: ScreenRecord = _
-  var timer: Timer = new Timer()
 
   def pack[A](ls: List[A]): List[List[A]] = {
     if (ls.isEmpty) List(List())
@@ -24,7 +27,7 @@ class DefaultMonitorService(ticketGenerator: TicketGenerator) extends MonitorSer
     }
   }
 
-  def recordsDuring(startDate: Timestamp, endDate: Option[Timestamp] = None): Seq[LogRecord] = {
+  def recordsDuring(startDate: DateTime, endDate: Option[DateTime] = None): Seq[LogRecord] = {
     ???
   }
 
@@ -33,7 +36,7 @@ class DefaultMonitorService(ticketGenerator: TicketGenerator) extends MonitorSer
   }
 
   def purchaseCount: Int = {
-    logRecords.filter(record => isToday(record.timeOfEntry) && record.timeOfEntry.getTime <= getNoonToday.getTime)
+    logRecords.filter(record => isToday(record.timeOfEntry) && record.timeOfEntry <= getNoonToday)
       .collect{case record: ScreenRecord => record}
       .count(r => r.name == "Remove Key" && r.attributes("reason") == "transaction successful")
   }
@@ -41,7 +44,7 @@ class DefaultMonitorService(ticketGenerator: TicketGenerator) extends MonitorSer
   def purchaseWindowHours: Int = 0
 
   def cancelClicksExceeded: Option[String] = {
-    val screenCancels: List[String] = logRecords.filter(record => isToday(record.timeOfEntry) && record.timeOfEntry.getTime >= timeSinceLastCheck)
+    val screenCancels: List[String] = logRecords.filter(record => isToday(record.timeOfEntry) && record.timeOfEntry >= lastCheckTime)
       .collect { case record: ButtonClickRecord => record }
       .filter(_.button == "Cancel")
       .map(_.screen)
@@ -65,7 +68,7 @@ class DefaultMonitorService(ticketGenerator: TicketGenerator) extends MonitorSer
   }
 
   override def brassKeysLow(): Unit = {
-    val brassKeysLowCount = logRecords.filter(record => isToday(record.timeOfEntry) && record.timeOfEntry.getTime >= timeSinceLastCheck)
+    val brassKeysLowCount = logRecords.filter(record => isToday(record.timeOfEntry) && record.timeOfEntry >= lastCheckTime)
       .collect{ case record: KeyEjectRecord => record }
       .filter(r => r.SKU.contains("BRAS"))
       .count(r => r.quantity < Configuration.brassLowAmount)
@@ -77,16 +80,10 @@ class DefaultMonitorService(ticketGenerator: TicketGenerator) extends MonitorSer
   }
 
   // When was the last time we checked for purchases after noon today
-  var lastCheckForPurchases: Timestamp = _
+  var lastCheckForPurchases: DateTime = _
 
 
-  def now: Calendar = Calendar.getInstance()
-
-  def isToday(time: Timestamp): Boolean = {
-    val oldTime = Calendar.getInstance()
-    oldTime.setTimeInMillis(time.getTime)
-    oldTime.get(Calendar.DATE) == now.get(Calendar.DATE)
-  }
+  def isToday(dateTime: DateTime): Boolean = dateTime.dayOfYear() == DateTime.now.dayOfYear()
 
   // TODO - This will produce multiple tickets if there are no purchases after noon and the machine is rebooted
   override def checkForPurchases(): Unit = {
@@ -94,54 +91,33 @@ class DefaultMonitorService(ticketGenerator: TicketGenerator) extends MonitorSer
     if ((lastCheckForPurchases == null || !isToday(lastCheckForPurchases)) && purchaseCount == 0) {
       ticketGenerator.create("No purchases made today.")
     }
-    lastCheckForPurchases = new Timestamp(now.getTimeInMillis)
+    lastCheckForPurchases = DateTime.now
   }
 
-  override def add(records: Seq[LogRecord]): Unit = { 
+  override def add(records: Seq[LogRecord]): Unit = {
     logRecords ++= records
     checkKiosk
   }
 
-  def getNoonToday: Date = {
-    val day = new Date()
-    val cal = Calendar.getInstance()
-    cal.setTime(day)
-    cal.set(Calendar.HOUR_OF_DAY, 12)
-    cal.set(Calendar.MINUTE,      cal.getMinimum(Calendar.MINUTE))
-    cal.set(Calendar.SECOND,      cal.getMinimum(Calendar.SECOND))
-    cal.set(Calendar.MILLISECOND, cal.getMinimum(Calendar.MILLISECOND))
-    cal.getTime
-  }
+  def getNoonToday: DateTime = 
+    DateTime.now.withHourOfDay(12).withMinuteOfHour(0).withSecondOfMinute(0)
 
-  def afterNoon: Boolean = {
-    Calendar.getInstance().getTimeInMillis > getNoonToday.getTime
-  }
+  def afterNoon: Boolean = DateTime.now > getNoonToday
 
-  var lastCheckTime: Timestamp = _
+  var lastCheckTime: DateTime = _
 
   def minutes(count: Int): Long = count * 60 * 1000
 
-  def timeSinceLastCheck: Long = {
-    if(lastCheckTime == null)
-      lastCheckTime = new Timestamp(0L)
-    Calendar.getInstance().getTimeInMillis - lastCheckTime.getTime
-  }
+  def timeSinceLastCheck: Long = (lastCheckTime to DateTime.now).millis 
 
   override def checkKiosk: Unit = {
-    if(lastCheckTime == null || timeSinceLastCheck > minutes(30)) {
+    if(lastCheckTime == null || timeSinceLastCheck > minutes(Configuration.monitorFrequency)) {
       checkCancelClicks()
       brassKeysLow()
       if(afterNoon)
         checkForPurchases()
-      lastCheckTime = new Timestamp(Calendar.getInstance().getTimeInMillis)
+      lastCheckTime = DateTime.now
 
     }
-  }
-}
-
-//helper class
-class ScreenTimeoutTask(currentScreen: ScreenRecord, ticketGenerator: TicketGenerator) extends TimerTask {
-  override def run(): Unit = {
-    ticketGenerator.create(currentScreen.name)
   }
 }

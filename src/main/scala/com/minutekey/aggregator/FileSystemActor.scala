@@ -10,7 +10,8 @@ import java.util.{Calendar, Date}
 import akka.actor.Actor
 import akka.event.{Logging, LoggingReceive}
 import com.minutekey.model.LogRecord
-import com.minutekey.{DefaultTicketGenerator, Configuration, DefaultMonitorService, MonitorService}
+import com.minutekey.monitor.{MonitorService, DefaultMonitorService}
+import com.minutekey.{DefaultTicketGenerator, Configuration}
 import com.minutekey.parser.DefaultLogParser
 import org.slf4j.LoggerFactory
 

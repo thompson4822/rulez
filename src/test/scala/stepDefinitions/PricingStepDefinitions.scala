@@ -3,6 +3,7 @@ package stepDefinitions
 import java.sql.Timestamp
 import java.util.Calendar
 import com.minutekey._
+import com.minutekey.monitor.DefaultMonitorService
 import cucumber.api.{DataTable, PendingException}
 import cucumber.api.scala.{EN, ScalaDsl}
 import cucumber.api.Scenario

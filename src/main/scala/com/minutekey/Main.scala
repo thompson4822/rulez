@@ -19,6 +19,7 @@ object Configuration {
   var brassLowAmount: Int = conf.getInt("brassLowAmount")
   var billAcceptorDisconnectLimit: Int = conf.getInt("billAcceptorDisconnectLimit")
   val daysOfInterest = conf.getInt("daysOfInterest")
+  val monitorFrequency = conf.getInt("monitorFrequency")
 }
 
 object Main {

@@ -9,6 +9,14 @@ import model._
 /**
  * Created by steve on 7/10/14.
  */
+
+/*
+I think we can just track the current screen using the page entry event from within Default Monitor Service
+
+That way we don't have to dink around with timers.
+*/
+
+/*
 trait ScreenMonitorService {
   def currentScreen: ScreenRecord
   def ticketGenerator: TicketGenerator
@@ -31,3 +39,4 @@ class DefaultScreenMonitorService(val currentScreen: ScreenRecord, val ticketGen
 object DefaultScreenMonitorService {
   var timer: Timer = new Timer()
 }
+*/

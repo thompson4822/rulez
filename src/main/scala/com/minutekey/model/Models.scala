@@ -1,15 +1,11 @@
 package com.minutekey.model
 
-import java.sql.Timestamp
-import java.text.SimpleDateFormat
-import java.util.{Date, Calendar}
+import java.util.{Date}
+import com.github.nscala_time.time.Imports._
 
 trait RecordUtils {
-  def timestampFor(date: Date, time: String): Timestamp = {
-    val dateString = s"${date.getYear + 1900}-${date.getMonth + 1}-${date.getDate} $time"
-    val dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS")
-    new Timestamp(dateFormat.parse(dateString).getTime)
-  }
+  def dateTimeFor(date: Date, time: String): DateTime =
+    new DateTime(s"${date.getYear + 1900}-${date.getMonth + 1}-${date.getDate} $time")
 
   def payloadToMap(payload: String): Map[String, String] = {
     val keyValues = payload.split(',').map(_.trim)
@@ -24,21 +20,19 @@ trait RecordUtils {
 }
 
 sealed trait LogRecord {
-  def timeOfEntry: Timestamp
+  def timeOfEntry: DateTime
 }
 
-case class ScreenRecord(name: String, timeOfEntry: Timestamp, timeoutSeconds: Int, sessionId: Option[String] = None, attributes: Map[String, String] = Map()) extends LogRecord {
+case class ScreenRecord(name: String, timeOfEntry: DateTime, timeoutSeconds: Int, sessionId: Option[String] = None, attributes: Map[String, String] = Map()) extends LogRecord {
 }
 
 object ScreenRecord extends RecordUtils {
-  def apply(name: String, timeoutSeconds: Int): ScreenRecord = {
-    val now = new Timestamp(Calendar.getInstance().getTimeInMillis)
-    ScreenRecord(name, now, timeoutSeconds)
-  }
+  def apply(name: String, timeoutSeconds: Int): ScreenRecord =
+    ScreenRecord(name, DateTime.now, timeoutSeconds)
 
   def apply(date: Date, time: String, payload: String): ScreenRecord = {
     val attributes = payloadToMap(payload)
-    ScreenRecord(name = attributes("screen"), timeOfEntry = timestampFor(date, time), timeoutSeconds = 3, sessionId = attributes.get("sessionid"), attributes)
+    ScreenRecord(name = attributes("screen"), timeOfEntry = dateTimeFor(date, time), timeoutSeconds = 3, sessionId = attributes.get("sessionid"), attributes)
   }
 }
 
@@ -51,59 +45,59 @@ object ScreenRecord extends RecordUtils {
   00:57:11.749 DEBUG - BillAcceptorDisconnectedEvent: [Description=Acceptor disconnected, username=Unknown, level=0]
  */
 
-case class ButtonClickRecord(screen: String, button: String, sessionId: String, timeOfEntry: Timestamp) extends LogRecord {
+case class ButtonClickRecord(screen: String, button: String, sessionId: String, timeOfEntry: DateTime) extends LogRecord {
 
 }
 
 object ButtonClickRecord extends RecordUtils {
   def apply(date: Date, time: String, payload: String): ButtonClickRecord = {
     val attributes = payloadToMap(payload)
-    ButtonClickRecord(screen = attributes("screen"), button = attributes("button"), sessionId = attributes("sessionid"), timeOfEntry = timestampFor(date, time))
+    ButtonClickRecord(screen = attributes("screen"), button = attributes("button"), sessionId = attributes("sessionid"), timeOfEntry = dateTimeFor(date, time))
   }
 }
 
-case class BillAcceptorDisconnectedRecord(description: String, timeOfEntry: Timestamp, username: String) extends LogRecord
+case class BillAcceptorDisconnectedRecord(description: String, timeOfEntry: DateTime, username: String) extends LogRecord
 
 object BillAcceptorDisconnectedRecord extends RecordUtils {
   def apply(date: Date, time: String, payload: String): BillAcceptorDisconnectedRecord = {
     val attributes = payloadToMap(payload)
-    BillAcceptorDisconnectedRecord(description = attributes("Description"), timeOfEntry = timestampFor(date, time), username = attributes("username"))
+    BillAcceptorDisconnectedRecord(description = attributes("Description"), timeOfEntry = dateTimeFor(date, time), username = attributes("username"))
   }
 }
 
-case class BillAcceptorConnectedRecord(description: String, timeOfEntry: Timestamp, username: String) extends LogRecord
+case class BillAcceptorConnectedRecord(description: String, timeOfEntry: DateTime, username: String) extends LogRecord
 
 object BillAcceptorConnectedRecord extends RecordUtils {
   def apply(date: Date, time: String, payload: String): BillAcceptorConnectedRecord = {
     val attributes = payloadToMap(payload)
-    BillAcceptorConnectedRecord(description = attributes("Description"), timeOfEntry = timestampFor(date, time), username = attributes("username"))
+    BillAcceptorConnectedRecord(description = attributes("Description"), timeOfEntry = dateTimeFor(date, time), username = attributes("username"))
   }
 }
 
-case class KeyEjectRecord(SKU: String, timeOfEntry: Timestamp, quantity: Int) extends LogRecord
+case class KeyEjectRecord(SKU: String, timeOfEntry: DateTime, quantity: Int) extends LogRecord
 
 object KeyEject extends RecordUtils {
   def apply(date: Date, time: String, payload: String): KeyEjectRecord = {
     val attributes = payloadToMap(payload)
-    KeyEjectRecord(SKU = attributes("SKU"), timeOfEntry = timestampFor(date, time), quantity = attributes("Quantity").toInt)
+    KeyEjectRecord(SKU = attributes("SKU"), timeOfEntry = dateTimeFor(date, time), quantity = attributes("Quantity").toInt)
   }
 }
 
-case class SurveyResponseRecord(response: String, sessionId: String, timeOfEntry: Timestamp) extends LogRecord
+case class SurveyResponseRecord(response: String, sessionId: String, timeOfEntry: DateTime) extends LogRecord
 
 object SurveyResponseRecord extends RecordUtils {
   def apply(date: Date, time: String, payload: String): SurveyResponseRecord = {
     val attributes = payloadToMap(payload)
-    SurveyResponseRecord(response = attributes("SurveyResponse"), sessionId = attributes("sessionid"), timeOfEntry = timestampFor(date, time))
+    SurveyResponseRecord(response = attributes("SurveyResponse"), sessionId = attributes("sessionid"), timeOfEntry = dateTimeFor(date, time))
   }
 }
 
-case class UnknownRecord(sessionId: Option[String] = None, timeOfEntry: Timestamp) extends LogRecord
+case class UnknownRecord(sessionId: Option[String] = None, timeOfEntry: DateTime) extends LogRecord
 
 object UnknownRecord extends RecordUtils {
   def apply(date: Date, time: String, payload: String): UnknownRecord = {
     val attributes = payloadToMap(payload)
-    UnknownRecord(sessionId = attributes.get("sessionid"), timeOfEntry = timestampFor(date, time))
+    UnknownRecord(sessionId = attributes.get("sessionid"), timeOfEntry = dateTimeFor(date, time))
   }
 }
 

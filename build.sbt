@@ -10,6 +10,7 @@ resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/release
 
 libraryDependencies ++= Seq(
   "org.scala-lang" % "scala-library" % "2.10.2",
+  "com.github.nscala-time" %% "nscala-time" % "1.2.0",
   "ch.qos.logback" % "logback-classic" % "1.1.2",
   "com.typesafe.akka" %% "akka-actor" % "2.2.3",
   "com.typesafe.akka" %% "akka-slf4j"    % "2.2.3",

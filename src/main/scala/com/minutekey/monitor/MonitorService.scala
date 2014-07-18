@@ -1,4 +1,4 @@
-package com.minutekey
+package com.minutekey.monitor
 
 import com.minutekey.model.LogRecord
 
