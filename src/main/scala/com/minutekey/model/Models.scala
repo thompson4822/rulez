@@ -4,8 +4,10 @@ import java.util.{Date}
 import com.github.nscala_time.time.Imports._
 
 trait RecordUtils {
-  def dateTimeFor(date: Date, time: String): DateTime =
-    new DateTime(s"${date.getYear + 1900}-${date.getMonth + 1}-${date.getDate} $time")
+  def dateTimeFor(date: Date, time: String): DateTime = {
+    val format = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS")
+    format.parseDateTime(s"${date.getYear + 1900}-${date.getMonth + 1}-${date.getDate} $time")
+  }
 
   def payloadToMap(payload: String): Map[String, String] = {
     val keyValues = payload.split(',').map(_.trim)

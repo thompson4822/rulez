@@ -104,11 +104,23 @@ class DefaultMonitorService(ticketGenerator: TicketGenerator) extends MonitorSer
 
   def afterNoon: Boolean = DateTime.now > getNoonToday
 
-  var lastCheckTime: DateTime = _
+  var _lastCheckTime: DateTime = _
+
+  def lastCheckTime = {
+    if(_lastCheckTime == null)
+      _lastCheckTime = DateTime.yesterday
+    _lastCheckTime
+  }
+
+  def lastCheckTime_=(dateTime: DateTime) = _lastCheckTime = dateTime
 
   def minutes(count: Int): Long = count * 60 * 1000
 
-  def timeSinceLastCheck: Long = (lastCheckTime to DateTime.now).millis 
+  def timeSinceLastCheck: Long = {
+    if(lastCheckTime == null)
+      lastCheckTime = DateTime.yesterday
+    (lastCheckTime to DateTime.now).millis
+  }
 
   override def checkKiosk: Unit = {
     if(lastCheckTime == null || timeSinceLastCheck > minutes(Configuration.monitorFrequency)) {
