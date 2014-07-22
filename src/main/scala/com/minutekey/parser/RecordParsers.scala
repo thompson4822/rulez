@@ -23,6 +23,7 @@ object RecordParsers {
   13:53:00.846 DEBUG - BillAcceptorConnectedEvent: [Description=Acceptor connected, username=Unknown, level=0]
   13:56:19.565 DEBUG - SurveyResponse: [SurveyResponse=GoBack, sessionid=640e9f89-b487-4cda-af5a-f0125c2061f9, Screen=Survey, level=0, message=]
   09:27:08.926 DEBUG - ButtonClick: [screen=Attract Loop, sessionid=fda6e558-75c2-45a3-a425-674cb1e703ea, button=Touch To Begin, level=0, message=]
+  09:27:08.926 DEBUG - InvalidKeyTypeEvent: [sessionid=fda6e558-75c2-45a3-a425-674cb1e703ea, message=some message here]
    */
   def parserWithIdentifier(identifier: String): Regex =
     ("^" + timeParser + " " + identifier + " " + payloadParser + "$").r
@@ -30,8 +31,11 @@ object RecordParsers {
   val PageEntryParser = parserWithIdentifier("DEBUG - Page Entry:")
   val BillAcceptorDisconnectedParser = parserWithIdentifier("DEBUG - Page Entry:")
   val BillAcceptorConnectedParser = parserWithIdentifier("DEBUG - BillAcceptorConnectedEvent:")
+  val BillAcceptorCassetteRemovedParser = parserWithIdentifier("DEBUG - BillAcceptorCassetteRemovedEvent:")
   val SurveyResponseParser = parserWithIdentifier("DEBUG - SurveyResponse:")
   val ButtonClickParser = parserWithIdentifier("DEBUG - ButtonClick:")
+  val KeyIdParser = parserWithIdentifier("DEBUG - KeyIdEvent:")
+  val InvalidKeyTypeParser = parserWithIdentifier("DEBUG - InvalidKeyTypeEvent:")
   val UnknownRecordParser = parserWithIdentifier(".*")
 
 }

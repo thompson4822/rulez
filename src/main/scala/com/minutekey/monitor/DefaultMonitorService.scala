@@ -38,7 +38,7 @@ class DefaultMonitorService(ticketGenerator: TicketGenerator) extends MonitorSer
   def purchaseCount: Int = {
     logRecords.filter(record => isToday(record.timeOfEntry) && record.timeOfEntry <= getNoonToday)
       .collect{case record: ScreenRecord => record}
-      .count(r => r.name == "Remove Key" && r.attributes("reason") == "transaction successful")
+      .count(r => r.screen == "Remove Key" && r.attributes("reason") == "transaction successful")
   }
 
   def purchaseWindowHours: Int = 0
@@ -122,14 +122,46 @@ class DefaultMonitorService(ticketGenerator: TicketGenerator) extends MonitorSer
     (lastCheckTime to DateTime.now).millis
   }
 
+  def checkUnidentifiedKeys(): Unit = {
+    val incidenceCount = logRecords.filter(record => isToday(record.timeOfEntry))
+      .collect{ case record: InvalidKeyTypeRecord => record }
+      .length
+    if (incidenceCount > 5) {
+      ticketGenerator.create(s"Suspicious number of unidentified keys encountered, could there be a hardware configuration issue?")
+    }
+
+  }
+
   override def checkKiosk: Unit = {
     if(lastCheckTime == null || timeSinceLastCheck > minutes(Configuration.monitorFrequency)) {
       checkCancelClicks()
       brassKeysLow()
       if(afterNoon)
         checkForPurchases()
+      checkBillAcceptorConnects()
+      checkBillAcceptorCassetteRemovals()
+      checkUnidentifiedKeys()
       lastCheckTime = DateTime.now
 
     }
   }
+
+  override def checkBillAcceptorConnects(): Unit = {
+    val incidenceCount = logRecords.filter(record => isToday(record.timeOfEntry))
+      .collect{ case record: BillAcceptorConnectedRecord => record }
+      .count(r => r.description == "Acceptor connected")
+    if (incidenceCount > 0) {
+      ticketGenerator.create(s"Suspicious Bill Acceptor Connectivity")
+    }
+  }
+
+  override def checkBillAcceptorCassetteRemovals(): Unit = {
+    val incidenceCount = logRecords.filter(record => isToday(record.timeOfEntry))
+      .collect{ case record: BillAcceptorCassetteRemovedRecord => record }
+      .count(r => r.description == "Cassette is Removed")
+    if (incidenceCount > 0) {
+      ticketGenerator.create(s"Suspicious Bill Acceptor Cassette Handling")
+    }
+  }
+
 }

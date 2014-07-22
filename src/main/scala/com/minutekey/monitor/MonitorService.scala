@@ -8,6 +8,10 @@ import com.minutekey.model.LogRecord
 trait MonitorService {
   def add(records: Seq[LogRecord])
 
+  def checkBillAcceptorConnects(): Unit
+
+  def checkBillAcceptorCassetteRemovals(): Unit
+
   def checkKiosk(): Unit
 
   def checkHardwareStatus(): Unit
@@ -24,4 +28,5 @@ trait MonitorService {
 
   def cancelClicksExceeded: Option[String]
 
+  def checkUnidentifiedKeys(): Unit
 }

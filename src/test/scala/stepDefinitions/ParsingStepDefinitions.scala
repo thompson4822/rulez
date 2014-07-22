@@ -34,11 +34,11 @@ class ParsingStepDefinitions extends ScalaDsl with EN with ShouldMatchers {
   }
 
   Then("""^I should see the screen "([^"]*)" was visited (\d+) times$"""){ (screenName: String, timesVisited: Int) =>
-    log.collect { case record: ScreenRecord => record}.count(_.name == screenName) should be (timesVisited)
+    log.collect { case record: ScreenRecord => record}.count(_.screen == screenName) should be (timesVisited)
   }
 
   Then("""^any screen entries that are not "([^"]*)" should contain a session id$"""){ (screenName: String) =>
-    val screenRecords = log.collect { case record: ScreenRecord => record }.filter(_.name != screenName)
+    val screenRecords = log.collect { case record: ScreenRecord => record }.filter(_.screen != screenName)
     screenRecords.flatMap(_.sessionId).length should be (screenRecords.length)
 
   }

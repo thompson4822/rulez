@@ -25,7 +25,7 @@ sealed trait LogRecord {
   def timeOfEntry: DateTime
 }
 
-case class ScreenRecord(name: String, timeOfEntry: DateTime, timeoutSeconds: Int, sessionId: Option[String] = None, attributes: Map[String, String] = Map()) extends LogRecord {
+case class ScreenRecord(screen: String, timeOfEntry: DateTime, timeoutSeconds: Int, sessionId: Option[String] = None, attributes: Map[String, String] = Map()) extends LogRecord {
 }
 
 object ScreenRecord extends RecordUtils {
@@ -34,7 +34,7 @@ object ScreenRecord extends RecordUtils {
 
   def apply(date: Date, time: String, payload: String): ScreenRecord = {
     val attributes = payloadToMap(payload)
-    ScreenRecord(name = attributes("screen"), timeOfEntry = dateTimeFor(date, time), timeoutSeconds = 3, sessionId = attributes.get("sessionid"), attributes)
+    ScreenRecord(screen = attributes("screen"), timeOfEntry = dateTimeFor(date, time), timeoutSeconds = 3, sessionId = attributes.get("sessionid"), attributes)
   }
 }
 
@@ -44,7 +44,10 @@ object ScreenRecord extends RecordUtils {
   13:56:19.565 DEBUG - SurveyResponse: [SurveyResponse=GoBack, sessionid=640e9f89-b487-4cda-af5a-f0125c2061f9, Screen=Survey, level=0, message=]
   09:27:08.926 DEBUG - ButtonClick: [screen=Attract Loop, sessionid=fda6e558-75c2-45a3-a425-674cb1e703ea, button=Touch To Begin, level=0, message=]
   12:46:46.798 DEBUG - KeyEject: [Stack=9, sessionid=507d4452-589f-4fa4-894a-e8860f9aca63, Quantity=30, SKU=KSCJMB00001BRAS, level=0, message=]
+  12:46:46.798 DEBUG - BillAcceptorCassetteRemovedEvent: [Description=Cassette is Removed, username=Unknown, level=0]
   00:57:11.749 DEBUG - BillAcceptorDisconnectedEvent: [Description=Acceptor disconnected, username=Unknown, level=0]
+  09:27:08.926 DEBUG - InvalidKeyTypeEvent: [sessionid=fda6e558-75c2-45a3-a425-674cb1e703ea, message=some message here]
+
  */
 
 case class ButtonClickRecord(screen: String, button: String, sessionId: String, timeOfEntry: DateTime) extends LogRecord {
@@ -57,6 +60,25 @@ object ButtonClickRecord extends RecordUtils {
     ButtonClickRecord(screen = attributes("screen"), button = attributes("button"), sessionId = attributes("sessionid"), timeOfEntry = dateTimeFor(date, time))
   }
 }
+
+case class InvalidKeyTypeRecord(sessionId: String, timeOfEntry: DateTime, message: String) extends LogRecord
+
+object InvalidKeyTypeRecord extends RecordUtils {
+  def apply(date: Date, time: String, payload: String): InvalidKeyTypeRecord = {
+    val attributes = payloadToMap(payload)
+    InvalidKeyTypeRecord(sessionId = attributes("sessionid"), timeOfEntry = dateTimeFor(date, time), message=attributes("message"))
+  }
+}
+
+case class BillAcceptorCassetteRemovedRecord(description: String, timeOfEntry: DateTime, username: String) extends LogRecord
+
+object BillAcceptorCassetteRemovedRecord extends RecordUtils {
+  def apply(date: Date, time: String, payload: String): BillAcceptorCassetteRemovedRecord = {
+    val attributes = payloadToMap(payload)
+    BillAcceptorCassetteRemovedRecord(description = attributes("Description"), timeOfEntry = dateTimeFor(date, time), username = attributes("username"))
+  }
+}
+
 
 case class BillAcceptorDisconnectedRecord(description: String, timeOfEntry: DateTime, username: String) extends LogRecord
 

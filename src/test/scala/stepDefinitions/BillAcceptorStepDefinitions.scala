@@ -1,25 +1,39 @@
 package stepDefinitions
 
-import cucumber.api.PendingException
+import com.minutekey.TicketGenerator
+import com.minutekey.model.{BillAcceptorCassetteRemovedRecord, BillAcceptorConnectedRecord}
+import com.minutekey.monitor.{DefaultMonitorService, MonitorService}
+import cucumber.api.{Scenario, PendingException}
 import cucumber.api.scala.{EN, ScalaDsl}
-import org.scalatest.matchers.ShouldMatchers
-import org.scalatest.mock.MockitoSugar
+import org.joda.time.DateTime
+import org.scalatest.Matchers
+import GlobalTestState._
 
 /**
  * Created by steve on 7/18/14.
  */
-class BillAcceptorStepDefinitions extends ScalaDsl with EN with ShouldMatchers with MockitoSugar {
+class BillAcceptorStepDefinitions extends ScalaDsl with EN with Matchers {
+  var monitorService: MonitorService = _
+
+  Before("@billAcceptor") { f: (Scenario) =>
+    ticketGenerator = new TestTicketGenerator
+    monitorService = new DefaultMonitorService(ticketGenerator)
+  }
+
   When("""^the bill acceptor has re-connected several times today$"""){ () =>
-    //// Express the Regexp above with the code you wish you had
-    throw new PendingException()
+    val records = List(
+      BillAcceptorConnectedRecord("Acceptor connected", DateTime.now, "Bob"),
+      BillAcceptorConnectedRecord("Acceptor connected", DateTime.now, "Bob")
+    )
+    monitorService.add(records)
   }
-  Then("""^a "([^"]*)" ticket should be generated$"""){ (arg0:String) =>
-    //// Express the Regexp above with the code you wish you had
-    throw new PendingException()
-  }
+
   When("""^the bill acceptor cassette has been detached more than once today$"""){ () =>
-    //// Express the Regexp above with the code you wish you had
-    throw new PendingException()
+    val records = List(
+      BillAcceptorCassetteRemovedRecord("Cassette is Removed", DateTime.now, "Bob"),
+      BillAcceptorCassetteRemovedRecord("Cassette is Removed", DateTime.now, "Bob")
+    )
+    monitorService.add(records)
   }
 
 }

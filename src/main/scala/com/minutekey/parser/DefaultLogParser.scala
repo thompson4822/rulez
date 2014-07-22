@@ -22,12 +22,16 @@ class DefaultLogParser extends LogParser {
 
   override def parse(date: Date, lines: Seq[String]): Seq[LogRecord] = {
     lines flatMap {
+      case InvalidKeyTypeParser(time, payload) =>
+        Some(InvalidKeyTypeRecord(date, time, payload))
       case PageEntryParser(time, payload) =>
         pageEntryCount += 1
         Some(ScreenRecord(date, time, payload))
       case BillAcceptorDisconnectedParser(time, payload) =>
         billAcceptorDisconnectedCount += 1
         Some(BillAcceptorDisconnectedRecord(date, time, payload))
+      case BillAcceptorCassetteRemovedParser(time, payload) =>
+        Some(BillAcceptorCassetteRemovedRecord(date, time, payload))
       case BillAcceptorConnectedParser(time, payload) =>
         billAcceptorConnectedCount += 1
         Some(BillAcceptorConnectedRecord(date, time, payload))

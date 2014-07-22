@@ -79,7 +79,7 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
   var currentScreen: ScreenRecord = _
 
   Given("""^the current screen is "([^"]*)"$"""){ (screenName: String) =>
-    currentScreen = screenRecords.find(_.name == screenName).get
+    currentScreen = screenRecords.find(_.screen == screenName).get
   }
 
   var elapsed: Int = _
@@ -107,7 +107,7 @@ class GeneralHealthStepDefinitions extends ScalaDsl with EN with ShouldMatchers 
   Then("""^a ticket (should|should not) be sent$"""){ (ticketSent: String) =>
     val timesCalled = if (ticketSent == "should") 1 else 0
     Thread.sleep(currentScreen.timeoutSeconds*1200)
-    verify(mockTicketGenerator, times(timesCalled)).create(currentScreen.name)
+    verify(mockTicketGenerator, times(timesCalled)).create(currentScreen.screen)
   }
 
   Then("""^the expected time on this screen is (\d+) minutes$"""){ (arg0:Int) =>
