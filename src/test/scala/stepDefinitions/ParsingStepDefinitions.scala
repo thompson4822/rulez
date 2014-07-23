@@ -1,21 +1,18 @@
 package stepDefinitions
 
-import java.io.File
-import java.util.{Calendar, Date}
+import java.util.Date
 
-import com.minutekey._
 import com.minutekey.model.{LogRecord, ScreenRecord}
 import com.minutekey.parser.{DefaultLogParser, LogParser}
-import cucumber.api.{DataTable, PendingException}
+import cucumber.api.DataTable
 import cucumber.api.scala.{EN, ScalaDsl}
-import org.mockito.Mockito._
-import org.scalatest.matchers.ShouldMatchers
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.Matchers
+
 import scala.collection.JavaConversions._
 /**
  * Created by steve on 7/11/14.
  */
-class ParsingStepDefinitions extends ScalaDsl with EN with ShouldMatchers {
+class ParsingStepDefinitions extends ScalaDsl with EN with Matchers {
 
   var logData: Seq[String] = Nil
 

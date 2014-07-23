@@ -12,6 +12,10 @@ trait MonitorService {
 
   def checkBillAcceptorCassetteRemovals(): Unit
 
+  def checkSessionConclusion(): Unit
+
+  def checkScreenTransition(): Unit
+
   def checkKiosk(): Unit
 
   def checkHardwareStatus(): Unit

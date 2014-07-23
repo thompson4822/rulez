@@ -15,8 +15,11 @@ class CommonStepDefinitions extends ScalaDsl with EN with Matchers with MockitoS
     //throw new PendingException()
   }
 
-  Then("""^a "([^"]*)" ticket should be generated$"""){ (ticketMessage: String) =>
-    ticketGenerator.messagesSent should contain (ticketMessage)
+  Then("""^a "([^"]*)" ticket (should|should not) be generated$"""){ (ticketMessage: String, expectation: String) =>
+    if(expectation == "should")
+      ticketGenerator.messagesSent should contain (ticketMessage)
+    else
+      ticketGenerator.messagesSent should not contain (ticketMessage)
   }
 
 }

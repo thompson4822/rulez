@@ -1,3 +1,4 @@
+@pricing
 Feature: Pricing rules
   As a kiosk
   I should be able to analyze pricing trends

@@ -1,19 +1,15 @@
 package stepDefinitions
 
-import java.sql.Timestamp
-import java.util.Calendar
 import com.minutekey._
 import com.minutekey.monitor.DefaultMonitorService
-import cucumber.api.{DataTable, PendingException}
-import cucumber.api.scala.{EN, ScalaDsl}
 import cucumber.api.Scenario
+import cucumber.api.scala.{EN, ScalaDsl}
 import org.mockito.Mockito._
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import org.scalatest.mock.MockitoSugar
-import scala.collection.JavaConversions._
 
 
-class PricingStepDefinitions extends ScalaDsl with EN with ShouldMatchers with MockitoSugar {
+class PricingStepDefinitions extends ScalaDsl with EN with Matchers with MockitoSugar {
 
   val mockTicketGenerator = mock[TicketGenerator]
   var ms: DefaultMonitorService = _

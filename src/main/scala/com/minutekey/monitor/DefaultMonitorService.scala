@@ -18,12 +18,12 @@ class DefaultMonitorService(ticketGenerator: TicketGenerator) extends MonitorSer
 
   var currentScreen: ScreenRecord = _
 
-  def pack[A](ls: List[A]): List[List[A]] = {
+  def pack[A](ls: List[A], equalityFun: (A, A) => Boolean): List[List[A]] = {
     if (ls.isEmpty) List(List())
     else {
-      val (packed, next) = ls span { _ == ls.head }
+      val (packed, next) = ls span { equalityFun(_, ls.head) }
       if (next == Nil) List(packed)
-      else packed :: pack(next)
+      else packed :: pack(next, equalityFun)
     }
   }
 
@@ -50,7 +50,7 @@ class DefaultMonitorService(ticketGenerator: TicketGenerator) extends MonitorSer
       .map(_.screen)
       .toList
     // If there is more than one cancel in a row for any screen, return the name of the offending screen
-    pack(screenCancels).find(list => list.length > 1).map(_.head)
+    pack(screenCancels, (x: String, y: String) => x == y).find(list => list.length > 1).map(_.head)
   }
 
   override def checkCancelClicks(): Unit = {
@@ -141,6 +141,8 @@ class DefaultMonitorService(ticketGenerator: TicketGenerator) extends MonitorSer
       checkBillAcceptorConnects()
       checkBillAcceptorCassetteRemovals()
       checkUnidentifiedKeys()
+      checkSessionConclusion()
+      checkScreenTransition()
       lastCheckTime = DateTime.now
 
     }
@@ -162,6 +164,33 @@ class DefaultMonitorService(ticketGenerator: TicketGenerator) extends MonitorSer
     if (incidenceCount > 0) {
       ticketGenerator.create(s"Suspicious Bill Acceptor Cassette Handling")
     }
+  }
+
+  // If the last session did not conclude on the remove key screen, generate a ticket
+  override def checkSessionConclusion(): Unit = {
+    val customerScreenRecords: ListBuffer[ScreenRecord] = logRecords.filter(record => isToday(record.timeOfEntry))
+      .collect{ case record: ScreenRecord => record}
+      .filter(_.sessionId.isDefined)
+    val sessions: List[List[ScreenRecord]] = pack(customerScreenRecords.toList, (x: ScreenRecord, y: ScreenRecord) => x.sessionId == y.sessionId)
+    if(sessions.length > 1) {
+      val concludedWithRemove = sessions.takeRight(2).head
+        .last.screen == "Remove Key"
+      if(!concludedWithRemove)
+        ticketGenerator.create("Customer Session Did Not Exit In The Expected Manner")
+    }
+  }
+
+  // Hard rule - if we've been on this screen more than 12 minutes, something is definitely wrong!
+  def timeoutExceeded(screen: ScreenRecord): Boolean = {
+    screen.screen != "Attract Loop" && (DateTime.now - 12.minutes) > screen.timeOfEntry
+  }
+
+  // If the last screen hasn't seen a transition in the required amount of time and is not the attract loop, generate a ticket
+  override def checkScreenTransition(): Unit = {
+    val lastScreenEntry: Option[ScreenRecord] = logRecords.filter(record => isToday(record.timeOfEntry))
+      .collect{ case record: ScreenRecord => record }
+      .lastOption
+    lastScreenEntry.map(screen => if(timeoutExceeded(screen)) ticketGenerator.create(s"Customer Screen '${screen.screen}' Did Not Transition Within Its Timeout Period"))
   }
 
 }
