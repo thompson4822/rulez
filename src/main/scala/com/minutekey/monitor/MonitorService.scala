@@ -8,29 +8,29 @@ import com.minutekey.model.LogRecord
 trait MonitorService {
   def add(records: Seq[LogRecord])
 
-  def checkBillAcceptorConnects(): Unit
+  def checkBillAcceptorConnects(records: List[LogRecord]): Unit
 
-  def checkBillAcceptorCassetteRemovals(): Unit
+  def checkBillAcceptorCassetteRemovals(records: List[LogRecord]): Unit
 
-  def checkSessionConclusion(): Unit
+  def checkSessionConclusion(records: List[LogRecord]): Unit
 
-  def checkScreenTransition(): Unit
+  def checkScreenTransition(records: List[LogRecord]): Unit
+
+  def checkKioskNotWorking(records: List[LogRecord]): Unit
 
   def checkKiosk(): Unit
 
-  def checkHardwareStatus(): Unit
+  def checkHardwareStatus(records: List[LogRecord]): Unit
 
-  def checkCancelClicks(): Unit
+  def checkCancelClicks(records: List[LogRecord]): Unit
 
-  def brassKeysLow(): Unit
+  def brassKeysLow(records: List[LogRecord]): Unit
 
-  def checkForPurchases(): Unit
+  def checkForPurchases(records: List[LogRecord]): Unit
 
   def purchaseCount: Int
 
   def purchaseWindowHours: Int
 
-  def cancelClicksExceeded: Option[String]
-
-  def checkUnidentifiedKeys(): Unit
+  def checkUnidentifiedKeys(records: List[LogRecord]): Unit
 }

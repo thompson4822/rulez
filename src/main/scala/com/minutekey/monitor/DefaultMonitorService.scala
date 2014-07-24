@@ -43,22 +43,21 @@ class DefaultMonitorService(ticketGenerator: TicketGenerator) extends MonitorSer
 
   def purchaseWindowHours: Int = 0
 
-  def cancelClicksExceeded: Option[String] = {
-    val screenCancels: List[String] = logRecords.filter(record => isToday(record.timeOfEntry) && record.timeOfEntry >= lastCheckTime)
+  override def checkCancelClicks(records: List[LogRecord]): Unit = {
+    val screenCancels: List[String] = records.filter(_.timeOfEntry >= lastCheckTime)
       .collect { case record: ButtonClickRecord => record }
       .filter(_.button == "Cancel")
       .map(_.screen)
       .toList
     // If there is more than one cancel in a row for any screen, return the name of the offending screen
-    pack(screenCancels, (x: String, y: String) => x == y).find(list => list.length > 1).map(_.head)
+    val screenWithMultipleCancels = pack(screenCancels, (x: String, y: String) => x == y)
+      .find(list => list.length > 1)
+      .map(_.head)
+    screenWithMultipleCancels.map(screen => ticketGenerator.create(s"Excessive cancels on screen ${screen}"))
   }
 
-  override def checkCancelClicks(): Unit = {
-    cancelClicksExceeded.map(screen => ticketGenerator.create(s"Excessive cancels on screen ${screen}"))
-  }
-
-  override def checkHardwareStatus(): Unit = {
-    val billAcceptorDisconnects = logRecords.filter(record => isToday(record.timeOfEntry))
+  override def checkHardwareStatus(records: List[LogRecord]): Unit = {
+    val billAcceptorDisconnects = records
       .collect{ case record: BillAcceptorDisconnectedRecord => record }
       .count(r => r.description == "Acceptor disconnected")
 
@@ -67,8 +66,8 @@ class DefaultMonitorService(ticketGenerator: TicketGenerator) extends MonitorSer
       }
   }
 
-  override def brassKeysLow(): Unit = {
-    val brassKeysLowCount = logRecords.filter(record => isToday(record.timeOfEntry) && record.timeOfEntry >= lastCheckTime)
+  override def brassKeysLow(records: List[LogRecord]): Unit = {
+    val brassKeysLowCount = records.filter(_.timeOfEntry >= lastCheckTime)
       .collect{ case record: KeyEjectRecord => record }
       .filter(r => r.SKU.contains("BRAS"))
       .count(r => r.quantity < Configuration.brassLowAmount)
@@ -86,7 +85,7 @@ class DefaultMonitorService(ticketGenerator: TicketGenerator) extends MonitorSer
   def isToday(dateTime: DateTime): Boolean = dateTime.dayOfYear() == DateTime.now.dayOfYear()
 
   // TODO - This will produce multiple tickets if there are no purchases after noon and the machine is rebooted
-  override def checkForPurchases(): Unit = {
+  override def checkForPurchases(records: List[LogRecord]): Unit = {
     // Need to set a flag to not check for purchases again today
     if ((lastCheckForPurchases == null || !isToday(lastCheckForPurchases)) && purchaseCount == 0) {
       ticketGenerator.create("No purchases made today.")
@@ -122,8 +121,10 @@ class DefaultMonitorService(ticketGenerator: TicketGenerator) extends MonitorSer
     (lastCheckTime to DateTime.now).millis
   }
 
-  def checkUnidentifiedKeys(): Unit = {
-    val incidenceCount = logRecords.filter(record => isToday(record.timeOfEntry))
+  def recordsToday: List[LogRecord] = logRecords.filter(record => isToday(record.timeOfEntry)).toList
+
+  def checkUnidentifiedKeys(records: List[LogRecord]): Unit = {
+    val incidenceCount = records
       .collect{ case record: InvalidKeyTypeRecord => record }
       .length
     if (incidenceCount > 5) {
@@ -134,22 +135,23 @@ class DefaultMonitorService(ticketGenerator: TicketGenerator) extends MonitorSer
 
   override def checkKiosk: Unit = {
     if(lastCheckTime == null || timeSinceLastCheck > minutes(Configuration.monitorFrequency)) {
-      checkCancelClicks()
-      brassKeysLow()
+      val records = recordsToday
+      checkCancelClicks(records)
+      brassKeysLow(records)
       if(afterNoon)
-        checkForPurchases()
-      checkBillAcceptorConnects()
-      checkBillAcceptorCassetteRemovals()
-      checkUnidentifiedKeys()
-      checkSessionConclusion()
-      checkScreenTransition()
+        checkForPurchases(records)
+      checkBillAcceptorConnects(records)
+      checkBillAcceptorCassetteRemovals(records)
+      checkUnidentifiedKeys(records)
+      checkSessionConclusion(records)
+      checkScreenTransition(records)
+      checkKioskNotWorking(records)
       lastCheckTime = DateTime.now
-
     }
   }
 
-  override def checkBillAcceptorConnects(): Unit = {
-    val incidenceCount = logRecords.filter(record => isToday(record.timeOfEntry))
+  override def checkBillAcceptorConnects(records: List[LogRecord]): Unit = {
+    val incidenceCount = records
       .collect{ case record: BillAcceptorConnectedRecord => record }
       .count(r => r.description == "Acceptor connected")
     if (incidenceCount > 0) {
@@ -157,8 +159,8 @@ class DefaultMonitorService(ticketGenerator: TicketGenerator) extends MonitorSer
     }
   }
 
-  override def checkBillAcceptorCassetteRemovals(): Unit = {
-    val incidenceCount = logRecords.filter(record => isToday(record.timeOfEntry))
+  override def checkBillAcceptorCassetteRemovals(records: List[LogRecord]): Unit = {
+    val incidenceCount = records
       .collect{ case record: BillAcceptorCassetteRemovedRecord => record }
       .count(r => r.description == "Cassette is Removed")
     if (incidenceCount > 0) {
@@ -167,8 +169,8 @@ class DefaultMonitorService(ticketGenerator: TicketGenerator) extends MonitorSer
   }
 
   // If the last session did not conclude on the remove key screen, generate a ticket
-  override def checkSessionConclusion(): Unit = {
-    val customerScreenRecords: ListBuffer[ScreenRecord] = logRecords.filter(record => isToday(record.timeOfEntry))
+  override def checkSessionConclusion(records: List[LogRecord]): Unit = {
+    val customerScreenRecords = records
       .collect{ case record: ScreenRecord => record}
       .filter(_.sessionId.isDefined)
     val sessions: List[List[ScreenRecord]] = pack(customerScreenRecords.toList, (x: ScreenRecord, y: ScreenRecord) => x.sessionId == y.sessionId)
@@ -186,11 +188,37 @@ class DefaultMonitorService(ticketGenerator: TicketGenerator) extends MonitorSer
   }
 
   // If the last screen hasn't seen a transition in the required amount of time and is not the attract loop, generate a ticket
-  override def checkScreenTransition(): Unit = {
-    val lastScreenEntry: Option[ScreenRecord] = logRecords.filter(record => isToday(record.timeOfEntry))
+  override def checkScreenTransition(records: List[LogRecord]): Unit = {
+    val lastScreenEntry: Option[ScreenRecord] = records
       .collect{ case record: ScreenRecord => record }
       .lastOption
     lastScreenEntry.map(screen => if(timeoutExceeded(screen)) ticketGenerator.create(s"Customer Screen '${screen.screen}' Did Not Transition Within Its Timeout Period"))
   }
 
+  // If subsequent sessions have been canceled because the kiosk was not working, we need to generate a ticket
+  override def checkKioskNotWorking(records: List[LogRecord]): Unit = {
+    // Get sessions today ...
+    val sessions = records
+      .collect{ case record: ScreenRecord => record }
+      .flatMap(_.sessionId)
+      .distinct
+      .toList
+
+    // For each session, try to find a survey response record that was Kiosk Not Working
+    //sessions.
+    // If subsequent responses of this nature, generate ticket
+    val surveySessions = records
+      .collect{ case survey: SurveyResponseRecord => survey }
+      .filter(survey => survey.response == "KioskNotWorking")
+      .map(survey => survey.sessionId)
+
+    if(sessions != Nil && surveySessions != Nil) {
+      // Produces sequences of items over time based on whether they had "KioskNotWorking" survey info. If any such sequence is > 1 (there were more than one subsequent
+      // session with this outcome) then generate a ticket.
+      pack(sessions.map(session => if (surveySessions.contains(session)) 'hasSurvey else 'noSurvey), (x: Symbol, y: Symbol) => x == y)
+        .find(series => series.head == 'hasSurvey && series.length > 1)
+        .map(_ => ticketGenerator.create("Surveys Indicating Kiosk Not Working"))
+    }
+
+  }
 }
