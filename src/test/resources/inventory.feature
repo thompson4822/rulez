@@ -4,14 +4,14 @@ Feature: Inventory
   I should be able to identify inventory trends
   so I can notify TSO when appropriate
 
-  Scenario Outline: Brass almost out should create ticket
-    Given a kiosk has brass keys
-    And the number of keys remaining is <Brass Count>
-    Then whether to generate a brass low ticket is <Gen Ticket>
-  Examples:
-    | Brass Count | Gen Ticket |
-    | 100         | no         |
-    | 9           | yes        |
+#  Scenario Outline: Brass almost out should create ticket
+#    Given a kiosk has brass keys
+#    And the number of keys remaining is <Brass Count>
+#    Then whether to generate a brass low ticket is <Gen Ticket>
+#  Examples:
+#    | Brass Count | Gen Ticket |
+#    | 100         | no         |
+#    | 9           | yes        |
 
   Scenario: If the machine is frequently unable to identify a keyway, it could mean issues with the robot configuration
     When too many keys could not be identified today
